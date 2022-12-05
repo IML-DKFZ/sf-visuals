@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "visualfailureanalysis"
-version = "0.1.0"
+version = "0.1.1"
 description = "Toolkit to visualize the reasoning of image classification networks."
 authors = ["Levin Kobelke <levin-kobelke@t-online.de>"]
 license = "MIT"

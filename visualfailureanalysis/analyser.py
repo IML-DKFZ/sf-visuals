@@ -45,6 +45,10 @@ from dash import html
 class Analyser:
     """
     Build a class holding experimental data to visualy analyse
+        path:  "../experiemnt_group_name/experiment_name"
+        class2plot:   dict({0:"myclassname0",...}) conatianing a mapping of integer classes to real names
+        ls_testsets:   ["nameoftestset",...] a list with names of all testsets
+        class2plot and test_datasets are two lists with a subset of classes/ testset names for which to generate outputs. (output can be quite large)
     """
 
     def __init__(
