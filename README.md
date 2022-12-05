@@ -1,6 +1,6 @@
 # Purpose
 This toolkit is designed to analyse the underlying representation of a image classification network.  
-
+It is designed to be compatable with the outputs of the https://arxiv.org/abs/2211.15259 Failure Detection Benchmark described in this paper.
 # Instructions
 
 1) Create a new fodler  
