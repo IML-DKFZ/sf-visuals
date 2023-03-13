@@ -1,2 +1,5 @@
 dash_data/
 outputs/
+
+*.egg-info
+_version.py
