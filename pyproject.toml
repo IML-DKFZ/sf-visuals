@@ -1,30 +1,37 @@
-[tool.poetry]
-name = "visualfailureanalysis"
-version = "0.1.1"
-description = "Toolkit to visualize the reasoning of image classification networks."
-authors = ["Levin Kobelke <levin-kobelke@t-online.de>"]
-license = "MIT"
-readme = "README.md"
-
-[tool.poetry.dependencies]
-python = "^3.9"
-pandas = "^1.5.2"
-numpy = "^1.23.5"
-albumentations = "^1.3.0"
-dash = "^2.7.0"
-Flask = "^2.2.2"
-matplotlib = "^3.6.2"
-Pillow = "^9.3.0"
-plotly = "^5.11.0"
-PyPDF2 = "^2.11.2"
-scikit-learn = "^1.1.3"
-scipy = "^1.9.3"
-torchvision = "^0.14.0"
-kaleido = "0.2.1"
-dash-bootstrap-components = "^1.2.1"
-ipywidgets = "^8.0.2"
-
-
 [build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+requires = ["setuptools>=45", "setuptools_scm[toml]>=6.2"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "visualfailureanalysis"
+dynamic = ["version"]
+requires-python = ">=3.9"
+description = "Toolkit to visualize the reasoning of image classification networks."
+authors = [
+    { name = "Levin Kobelke", email = "levin-kobelke@t-online.de" },
+]
+license = { text = "MIT" }
+readme = "README.md"
+dependencies = [
+    "pandas>=1.5.2",
+    "numpy>=1.23.5",
+    "albumentations>=1.3.0",
+    "dash>=2.7.0",
+    "Flask>=2.2.2",
+    "matplotlib>=3.6.2",
+    "Pillow>=9.3.0",
+    "plotly>=5.11.0",
+    "PyPDF2>=2.11.2",
+    "scikit-learn>=1.1.3",
+    "scipy>=1.9.3",
+    "torchvision>=0.14.0",
+    "kaleido==0.2.1",
+    "dash-bootstrap-components>=1.2.1",
+    "ipywidgets>=8.0.2",
+]
+
+[tool.setuptools_scm]
+write_to = "visualfailureanalysis/_version.py"
+
+[tool.setuptools.packages]
+find = {}
