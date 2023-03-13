@@ -3,12 +3,13 @@ requires = ["setuptools>=45", "setuptools_scm[toml]>=6.2"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "visualfailureanalysis"
+name = "sf-visuals"
 dynamic = ["version"]
 requires-python = ">=3.9"
 description = "Toolkit to visualize the reasoning of image classification networks."
 authors = [
     { name = "Levin Kobelke", email = "levin-kobelke@t-online.de" },
+    { name = "Till Bungert", email = "till.bungert@dkfz.de" },
 ]
 license = { text = "MIT" }
 readme = "README.md"
@@ -31,7 +32,7 @@ dependencies = [
 ]
 
 [tool.setuptools_scm]
-write_to = "visualfailureanalysis/_version.py"
+write_to = "sf_visuals/_version.py"
 
 [tool.setuptools.packages]
 find = {}
