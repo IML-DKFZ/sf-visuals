@@ -14,7 +14,6 @@ def main():
     parser.add_argument("--path", type=Path)
     args = parser.parse_args()
     analyser = Analyser(path=args.path)
-    analyser.setup()
 
     app.layout = html.Div(
         [
@@ -26,8 +25,8 @@ def main():
                         children=f"Experiment folder:",
                     ),
                     html.P(f"{args.path}"),
-                    html.H2(
-                        children="Select datafile and class to display:",
+                    html.H3(
+                        children="Classes:",
                     ),
                     dcc.Checklist(
                         [
@@ -50,8 +49,11 @@ def main():
                         analyser.classes,
                         id="checklist-classes",
                     ),
-                    html.Div(id="debug", children=[]),
+                    html.H3(
+                        children="Datasets:",
+                    ),
                     dcc.RadioItems(
+                        [{ "label": "All", "value": "ALL"}] +
                         [
                             {
                                 "label": html.Div(
@@ -75,8 +77,9 @@ def main():
                 ],
             ),
             dcc.Graph(
-                figure=analyser._Analyser__encoderls[1][0],
-                style={"display": "inline-block", "width": "80%"},
+                id="latentspace",
+                figure=analyser.plot_latentspace(analyser.testsets[1]),
+                style={"display": "inline-block"},
             ),
         ],
         style={"display": "flex"}
@@ -93,6 +96,24 @@ def main():
             classes[int(i["id"])] = v
         analyser.classes = classes
         return [str(analyser._Analyser__class2name)]
+
+    @app.callback(
+        # Output("latentspace", "figure"),
+        Output("checklist-classes", "value"),
+        Input("checklist-classes", "value"),
+        State("checklist-testsets", "value"),
+    )
+    def update_class_list(value, testset):
+        # return analyser.plot_latentspace(testset)
+        return value
+
+    @app.callback(
+        Output("latentspace", "figure"),
+        Input("checklist-testsets", "value"),
+        Input("checklist-classes", "value"),
+    )
+    def update_testset(testset, classes):
+        return analyser.plot_latentspace(testset, classes2plot=tuple(classes))
 
     # @app.callback(
     #     Output("scatter", "figure"),

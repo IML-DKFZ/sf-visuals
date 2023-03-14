@@ -1,6 +1,7 @@
 import copy
 import warnings
 from collections import OrderedDict
+from functools import cache, cached_property
 from pathlib import Path
 from typing import Tuple
 
@@ -32,6 +33,7 @@ warnings.filterwarnings(action="ignore", category=FutureWarning)
 import os
 
 import dash
+import yaml
 from dash import dcc, html
 
 
@@ -69,11 +71,29 @@ class Analyser:
 
         classes = np.unique(self.__labels)
         self.__class2name = dict(zip(classes, classes))
-        self.__class2plot = classes
+        self.__class2plot = tuple(classes)
 
-        datasets = np.unique(self.__dataset_idx)
-        self.__ls_testsets = datasets
-        self.__test_datasets = [1, 2]
+        with (path / "hydra" / "config.yaml").open() as file:
+            config = yaml.safe_load(file)
+
+        flat_test_set_list = []
+        if config["eval"]["val_tuning"]:
+            flat_test_set_list.append("validation")
+        for _, datasets in config["eval"]["query_studies"].items():
+            if isinstance(datasets, list):
+                flat_test_set_list.extend(list(datasets))
+            else:
+                flat_test_set_list.append(datasets)
+
+        def _rename_datasets(dataset: str):
+            return dataset.replace("${data.dataset}", "iid").replace(
+                config["data"]["dataset"], ""
+            )
+
+        flat_test_set_list = list(map(_rename_datasets, flat_test_set_list))
+
+        self.__ls_testsets = flat_test_set_list
+        self.__test_datasets = flat_test_set_list[1:3]
 
         self.__test_datasets_length = len(self.__ls_testsets)
         self.__csvs = []
@@ -129,6 +149,130 @@ class Analyser:
     @property
     def testsets(self):
         return self.__test_datasets
+
+    @cache
+    def embedding(self, testset: str):
+        i = self.__ls_testsets.index(testset)
+        study = str(self.__ls_testsets[i])
+        boolarray = self.__encoded_output[:, -1] == i
+        len_testset = np.sum(boolarray)
+        predicted = self.__out_class[boolarray]
+        baseline_class = mode(self.__labels)[0][0]
+        encoded = self.__encoded_output[boolarray][:, :-1]
+        softmax = self.__softmax_beginning[boolarray]
+        y_score = self.__softmax_beginning[boolarray, 1]
+        y_true = self.__labels[boolarray]
+        subfolders = str(self.__path).split("/")
+        cwd = os.getcwd()
+        dir = subfolders[-4:-2]
+        folder2create = os.path.join(cwd, "outputs", dir[0], dir[1])
+        check_file = folder2create + "/" + study + "/dataframe.csv"
+        if os.path.exists(check_file):
+            df = pd.read_csv(check_file)
+        else:
+            pca50 = PCA(n_components=50)
+            pca_encoded50 = pca50.fit_transform(encoded)
+            tsne_encoded3_set = TSNE(
+                n_components=3, init="pca", learning_rate=200
+            ).fit_transform(pca_encoded50)
+            ### create dataframe for each dataset that stores all relevant information
+            testset_csv = self.__csvs[i]
+            fp = testset_csv.filepath
+            ### savety_ check that y_true from raw output == targets from the csv to ensure correct ordering/dataset
+            df = getdffromarrays(
+                labels=y_true,
+                out_class=predicted,
+                tsne_encoded3=tsne_encoded3_set,
+                softmax=softmax,
+                filepath=fp,
+            )
+
+        testfodlers2create = os.path.join(folder2create, str(testset))
+        print(testfodlers2create)
+        if not os.path.exists(testfodlers2create):
+            os.makedirs(testfodlers2create)
+        df.to_csv(testfodlers2create + "/dataframe.csv", index=False)
+
+        return df
+
+    @cache
+    def plot_latentspace(self, testset: str, classes2plot: tuple[int] | None = None):
+        if testset == "ALL":
+            df = pd.concat([self.embedding(t) for t in self.__test_datasets])
+        else:
+            df = self.embedding(testset)
+
+        if classes2plot is None:
+            classes2plot = self.__class2plot
+
+        df["confid"] = (df.filter(like="softmax").max(axis=1) > 0.8).astype(float)
+        vmin = df["confid"].min()
+        vmax = df["confid"].max()
+
+        xmin = np.percentile(df["0"], 1)
+        xmax = np.percentile(df["0"], 99)
+        ymin = np.percentile(df["1"], 1)
+        ymax = np.percentile(df["1"], 99)
+        zmin = np.percentile(df["2"], 1)
+        zmax = np.percentile(df["2"], 99)
+
+        markers = [
+            "circle",
+            "cross",
+            "diamond",
+            "square",
+            "circle-open",
+            "diamond-open",
+            "square-open",
+        ]
+
+        fig = go.Figure()
+        for c in classes2plot:
+            data = df[(df.label == df.predicted) & (df.label == c)]
+            fig.add_trace(
+                go.Scatter3d(
+                    x=data["0"],
+                    y=data["1"],
+                    z=data["2"],
+                    opacity=0.4,
+                    mode="markers",
+                    text=data["filepath"],
+                    marker=dict(
+                        size=5,
+                        cmin=vmin,
+                        cmax=vmax,
+                        color=data["confid"],
+                        colorscale=[(0, "#e46c00"), (1, "#67da40")],
+                        symbol=markers[c % len(markers)],
+                    ),
+                )
+            )
+            data = df[(df.label != df.predicted) & (df.label == c)]
+            fig.add_trace(
+                go.Scatter3d(
+                    x=data["0"],
+                    y=data["1"],
+                    z=data["2"],
+                    opacity=0.4,
+                    mode="markers",
+                    text=data["filepath"],
+                    marker=dict(
+                        size=5,
+                        cmin=vmin,
+                        cmax=vmax,
+                        color=data["confid"],
+                        colorscale=[(0, "#56c1ff"), (1, "#ee230c")],
+                        symbol=markers[c % len(markers)],
+                    ),
+                )
+            )
+
+        fig.update_layout(
+            coloraxis_colorbar=dict(yanchor="top", y=1, x=0, ticks="outside")
+        )
+        fig.layout.hovermode = "closest"
+        fig.update_layout(width=1000, height=1000, template="simple_white")
+        return fig
 
     def print_summary_stats(self):
         """
@@ -195,9 +339,8 @@ class Analyser:
         """
         self.print_summary_stats()
         # might take a while because of TSNE
-        for i in self.__test_datasets:
-            # i = self.__ls_testsets.index(testset)
-            testset = i
+        for testset in self.__test_datasets:
+            i = self.__ls_testsets.index(testset)
             study = str(self.__ls_testsets[i])
             boolarray = self.__encoded_output[:, -1] == i
             len_testset = np.sum(boolarray)
