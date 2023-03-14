@@ -31,6 +31,9 @@ dependencies = [
     "ipywidgets>=8.0.2",
 ]
 
+[project.scripts]
+sf-visuals = "sf_visuals.app:main"
+
 [tool.setuptools_scm]
 write_to = "sf_visuals/_version.py"
 

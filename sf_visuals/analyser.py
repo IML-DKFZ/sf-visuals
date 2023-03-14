@@ -1,45 +1,38 @@
-from visualfailureanalysis.utils.utils import (
-    kmeans_cluster_representative_without_failurelabel,
-)
-from visualfailureanalysis.utils.utils import overconfident_images
-from visualfailureanalysis.utils.utils import underconfident_images
-from visualfailureanalysis.utils.utils import getdffromarrays
+import copy
+import warnings
+from collections import OrderedDict
+from pathlib import Path
+from typing import Tuple
 
-import pandas as pd
+import cv2
+import matplotlib
 import numpy as np
 import pandas as pd
-from sklearn.manifold import TSNE
-from sklearn.decomposition import PCA
+import plotly
+import plotly.graph_objects as go
+from flask import request
 from matplotlib import pyplot as plt
 from mpl_toolkits import mplot3d
-from sklearn.metrics import (
-    classification_report,
-    precision_recall_curve,
-    accuracy_score,
-    roc_auc_score,
-    confusion_matrix,
-    average_precision_score,
-)
 from numpy import random
-from sklearn import metrics
-from scipy.spatial import distance
-import plotly.graph_objects as go
-from collections import OrderedDict
-import copy
-import matplotlib
-import plotly
-import cv2
-from typing import Tuple
-from scipy.stats import mode
-from flask import request
-import warnings
 from PyPDF2 import PdfMerger
+from scipy.spatial import distance
+from scipy.stats import mode
+from sklearn import metrics
+from sklearn.decomposition import PCA
+from sklearn.manifold import TSNE
+from sklearn.metrics import (accuracy_score, average_precision_score,
+                             classification_report, confusion_matrix,
+                             precision_recall_curve, roc_auc_score)
+
+from sf_visuals.utils.utils import (
+    getdffromarrays, kmeans_cluster_representative_without_failurelabel,
+    overconfident_images, underconfident_images)
 
 warnings.filterwarnings(action="ignore", category=FutureWarning)
 import os
+
 import dash
-from dash import dcc
-from dash import html
+from dash import dcc, html
 
 
 class Analyser:
@@ -53,25 +46,35 @@ class Analyser:
 
     def __init__(
         self,
-        path: str,
-        class2name: dict,
-        class2plot: list[int],
-        ls_testsets: list[str],
-        test_datasets: list[str],
+        path: Path | str,
+        # class2name: dict,
+        # class2plot: list[int],
+        # ls_testsets: list[str],
+        # test_datasets: list[str],
     ) -> None:
 
-        self.__path = path + "/test_results/"
-        self.__class2name = class2name
-        self.__class2plot = class2plot
-        self.__ls_testsets = ls_testsets
-        self.__test_datasets = test_datasets
+        if isinstance(path, str):
+            path = Path(path)
+
+        self.__path = path / "test_results"
         # Loading Data from init parameters
-        self.__raw_output = np.load(f"{self.__path}raw_output.npz")["arr_0"]
+        self.__raw_output = np.load(self.__path / "raw_output.npz")["arr_0"]
         self.__softmax_output = self.__raw_output[:, :-2]
         self.__out_class = np.argmax(np.squeeze(self.__softmax_output), axis=1)
-        self.__labels = np.squeeze(np.asarray(self.__raw_output[:, -2]))
-        self.__dataset_idx = np.squeeze(np.asarray(self.__raw_output[:, -1]))
-        self.__encoded_output = np.load(f"{self.__path}encoded_output.npz")["arr_0"]
+        self.__labels = np.squeeze(np.asarray(self.__raw_output[:, -2])).astype(int)
+        self.__encoded_output = np.load(self.__path / "encoded_output.npz")["arr_0"]
+        self.__dataset_idx = np.squeeze(np.asarray(self.__raw_output[:, -1])).astype(
+            int
+        )
+
+        classes = np.unique(self.__labels)
+        self.__class2name = dict(zip(classes, classes))
+        self.__class2plot = classes
+
+        datasets = np.unique(self.__dataset_idx)
+        self.__ls_testsets = datasets
+        self.__test_datasets = [1, 2]
+
         self.__test_datasets_length = len(self.__ls_testsets)
         self.__csvs = []
         self.__dataframes = {}
@@ -79,9 +82,9 @@ class Analyser:
         self.accuracies_dict = {}
         for i in range(int(self.__test_datasets_length)):
             try:
-                attributions = pd.read_csv(f"{self.__path}attributions{i}.csv")
+                attributions = pd.read_csv(self.__path / f"attributions{i}.csv")
             except:
-                attributions = pd.read_csv(f"{self.__path}attributions.csv")
+                attributions = pd.read_csv(self.__path / "attributions.csv")
             self.__csvs.append(attributions)
         self.__softmax_beginning = np.squeeze(self.__softmax_output)
         self.n_classes = len(np.unique(self.__labels))
@@ -114,6 +117,18 @@ class Analyser:
             "rgb(198, 189, 34)",
             "rgb(23, 180, 207)",
         ]
+
+    @property
+    def classes(self):
+        return list(self.__class2name.values())
+
+    @classes.setter
+    def classes(self, values: dict):
+        self.__class2name |= values
+
+    @property
+    def testsets(self):
+        return self.__test_datasets
 
     def print_summary_stats(self):
         """
@@ -180,9 +195,10 @@ class Analyser:
         """
         self.print_summary_stats()
         # might take a while because of TSNE
-        for testset in self.__test_datasets:
-            i = self.__ls_testsets.index(testset)
-            study = self.__ls_testsets[i]
+        for i in self.__test_datasets:
+            # i = self.__ls_testsets.index(testset)
+            testset = i
+            study = str(self.__ls_testsets[i])
             boolarray = self.__encoded_output[:, -1] == i
             len_testset = np.sum(boolarray)
             predicted = self.__out_class[boolarray]
@@ -191,7 +207,7 @@ class Analyser:
             softmax = self.__softmax_beginning[boolarray]
             y_score = self.__softmax_beginning[boolarray, 1]
             y_true = self.__labels[boolarray]
-            subfolders = self.__path.split("/")
+            subfolders = str(self.__path).split("/")
             cwd = os.getcwd()
             dir = subfolders[-4:-2]
             folder2create = os.path.join(cwd, "outputs", dir[0], dir[1])
@@ -280,16 +296,16 @@ class Analyser:
                 )
                 figures[cla] = fig
             self.__encoderls[testset] = figures
-            testfodlers2create = os.path.join(folder2create, testset)
+            testfodlers2create = os.path.join(folder2create, str(testset))
             print(testfodlers2create)
             if not os.path.exists(testfodlers2create):
                 os.makedirs(testfodlers2create)
             self.__dataframes[testset].to_csv(
                 testfodlers2create + "/dataframe.csv", index=False
             )
-        self.show_underconfident()
-        self.show_overconfident()
-        self.show_representative()
+        # self.show_underconfident()
+        # self.show_overconfident()
+        # self.show_representative()
 
     def prepair_dash(self):
         """
