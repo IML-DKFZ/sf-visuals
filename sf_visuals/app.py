@@ -18,7 +18,8 @@ def main():
     analyser = Analyser(path=args.path)
 
     app.layout = html.Div(
-        [
+        className="container",
+        children=[
             html.Div(
                 id="sidebar",
                 style={"display": "inline-block"},
@@ -60,12 +61,7 @@ def main():
                             {
                                 "label": html.Div(
                                     [
-                                        f"Testset {c}: ",
-                                        dcc.Input(
-                                            id={"type": "testset-name", "id": f"{c}"},
-                                            type="text",
-                                            value=f"{c}",
-                                        ),
+                                        f"Testset {c}",
                                     ],
                                     style={"display": "inline-block"},
                                 ),
@@ -80,13 +76,19 @@ def main():
             ),
             dcc.Graph(
                 id="latentspace",
+                className="latentspace",
                 figure=analyser.plot_latentspace(analyser.testsets[1]),
-                style={"display": "inline-block"},
+                responsive=True,
+                clear_on_unhover=True,
             ),
-            html.Img(id="curimg", width="512px", height="512px"),
+            html.Div(
+                className="hover-preview",
+                children=[
+                    html.Img(id="curimg", width="512px", height="512px"),
+                ],
+            ),
             html.Div(children=[], hidden=True, id="dummy"),
         ],
-        style={"display": "flex"},
     )
 
     @app.callback(
@@ -112,10 +114,14 @@ def main():
     @app.callback(
         Output("curimg", "src"),
         Input("latentspace", "hoverData"),
+        Input("latentspace", "clickData"),
     )
-    def update_on_hover(hoverData):
+    def update_on_hover(hoverData, clickData):
         if hoverData is None:
-            raise PreventUpdate
+            if clickData is None:
+                raise PreventUpdate
+            hoverData = clickData
+
         imgpath = hoverData["points"][0]["text"]
         imgpath = imgpath.replace(
             "/dkfz/cluster/gpu/data/OE0612/l049e/", "/home/t974t/Data/levin/"
