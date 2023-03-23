@@ -1,40 +1,19 @@
-import copy
-import warnings
-from collections import OrderedDict
-from functools import cache, cached_property
+import os
+from functools import cache
 from pathlib import Path
-from typing import Tuple
 
-import cv2
-import matplotlib
 import numpy as np
 import pandas as pd
-import plotly
 import plotly.graph_objects as go
-from flask import request
-from matplotlib import pyplot as plt
-from mpl_toolkits import mplot3d
-from numpy import random
+import yaml
 from PyPDF2 import PdfMerger
-from scipy.spatial import distance
 from scipy.stats import mode
-from sklearn import metrics
 from sklearn.decomposition import PCA
 from sklearn.manifold import TSNE
-from sklearn.metrics import (accuracy_score, average_precision_score,
-                             classification_report, confusion_matrix,
-                             precision_recall_curve, roc_auc_score)
 
 from sf_visuals.utils.utils import (
     getdffromarrays, kmeans_cluster_representative_without_failurelabel,
     overconfident_images, underconfident_images)
-
-warnings.filterwarnings(action="ignore", category=FutureWarning)
-import os
-
-import dash
-import yaml
-from dash import dcc, html
 
 
 class Analyser:
@@ -49,10 +28,6 @@ class Analyser:
     def __init__(
         self,
         path: Path | str,
-        # class2name: dict,
-        # class2plot: list[int],
-        # ls_testsets: list[str],
-        # test_datasets: list[str],
     ) -> None:
 
         if isinstance(path, str):
