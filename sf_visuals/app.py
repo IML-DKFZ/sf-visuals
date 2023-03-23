@@ -1,7 +1,9 @@
 import argparse
+import base64
 from pathlib import Path
 
 from dash import ALL, Dash, Input, Output, State, dcc, html
+from dash.exceptions import PreventUpdate
 
 from sf_visuals.analyser import Analyser
 
@@ -53,8 +55,8 @@ def main():
                         children="Datasets:",
                     ),
                     dcc.RadioItems(
-                        [{ "label": "All", "value": "ALL"}] +
-                        [
+                        [{"label": "All", "value": "ALL"}]
+                        + [
                             {
                                 "label": html.Div(
                                     [
@@ -81,12 +83,14 @@ def main():
                 figure=analyser.plot_latentspace(analyser.testsets[1]),
                 style={"display": "inline-block"},
             ),
+            html.Img(id="curimg", width="512px", height="512px"),
+            html.Div(children=[], hidden=True, id="dummy"),
         ],
-        style={"display": "flex"}
+        style={"display": "flex"},
     )
 
     @app.callback(
-        Output("debug", "children"),
+        Output("dummy", "children"),
         Input({"type": "class-name", "id": ALL}, "value"),
         State({"type": "class-name", "id": ALL}, "id"),
     )
@@ -95,17 +99,7 @@ def main():
         for i, v in zip(id, value):
             classes[int(i["id"])] = v
         analyser.classes = classes
-        return [str(analyser._Analyser__class2name)]
-
-    @app.callback(
-        # Output("latentspace", "figure"),
-        Output("checklist-classes", "value"),
-        Input("checklist-classes", "value"),
-        State("checklist-testsets", "value"),
-    )
-    def update_class_list(value, testset):
-        # return analyser.plot_latentspace(testset)
-        return value
+        return None
 
     @app.callback(
         Output("latentspace", "figure"),
@@ -115,51 +109,21 @@ def main():
     def update_testset(testset, classes):
         return analyser.plot_latentspace(testset, classes2plot=tuple(classes))
 
-    # @app.callback(
-    #     Output("scatter", "figure"),
-    #     Input("dropdown_class", "value"),
-    #     Input("dropdown_data", "value"),
-    # )
-    # def update_encoder(dropdown_class, dropdown_data):
-    #     global TEXT_ARRAY
-    #     TEXT_ARRAY = TEXT_ARRAYS[dropdown_data][dropdown_class]
-    #     figure = FIGURES[dropdown_data][dropdown_class]
-    #
-    #     return figure
-    #
-    #
-    # @app.callback(Output("dropdown_class", "options"), Input("dropdown_data", "value"))
-    # def update_class_dropdown(data_name):
-    #     df = df_dict[data_name]
-    #     return np.sort(df.label.unique())
-    #
-    #
-    # @app.callback(
-    #     Output("img_plot", "figure"),
-    #     # Output("test", "children"),
-    #     Input("scatter", "hoverData"),
-    # )
-    # def update_on_hover(hoverData):
-    #     """ """
-    #     if hoverData is None:
-    #         raise PreventUpdate
-    #     try:
-    #         imgpath = hoverData["points"][0]["text"]
-    #         _, end = imgpath.split("/l049e")
-    #         if "cluster" in imgpath:
-    #             filep2 = os.path.join("/home/l049e/Data/" + end)
-    #         if "home" in imgpath:
-    #             filep2 = imgpath
-    #         imbgr2 = cv2.imread(filep2)
-    #         im2 = cv2.cvtColor(imbgr2, cv2.COLOR_BGR2RGB)
-    #         fig2 = go.Figure()
-    #         fig2.add_trace(go.Image(z=im2))
-    #         fig2.update_layout(width=1000, height=1000, template="simple_white")
-    #         return fig2
-    #         # return filep2
-    #     except Exception as error:
-    #         print(error)
-    #         raise PreventUpdate
+    @app.callback(
+        Output("curimg", "src"),
+        Input("latentspace", "hoverData"),
+    )
+    def update_on_hover(hoverData):
+        if hoverData is None:
+            raise PreventUpdate
+        imgpath = hoverData["points"][0]["text"]
+        imgpath = imgpath.replace(
+            "/dkfz/cluster/gpu/data/OE0612/l049e/", "/home/t974t/Data/levin/"
+        )
+        with open(imgpath, "rb") as img:
+            data = base64.b64encode(img.read()).replace(b"\n", b"").decode("utf-8")
+            return f"data:image/jpeg;base64,{data}"
+
     app.run(host="0.0.0.0", debug=True, port="8055")
 
 
