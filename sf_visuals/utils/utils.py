@@ -1,37 +1,22 @@
-import pandas as pd
-import numpy as np
-from sklearn.manifold import TSNE
-from sklearn.decomposition import PCA
-from matplotlib import pyplot as plt
-from mpl_toolkits import mplot3d
-from sklearn.metrics import (
-    classification_report,
-    precision_recall_curve,
-    accuracy_score,
-    roc_auc_score,
-    confusion_matrix,
-    average_precision_score,
-)
-from numpy import random
-from sklearn import metrics
-from scipy.spatial import distance
-import plotly.graph_objects as go
-from collections import OrderedDict
 import copy
-import matplotlib
-import plotly
-import cv2
-from typing import Tuple
-from scipy.stats import mode
-from flask import request
-
 import warnings
+from collections import OrderedDict
+
+# import cv2
+import matplotlib
+import numpy as np
+import pandas as pd
+import plotly.graph_objects as go
+from matplotlib import pyplot as plt
+from scipy.spatial import distance
+from scipy.stats import mode
+from sklearn.decomposition import PCA
+from sklearn.manifold import TSNE
+from sklearn.metrics import (accuracy_score, average_precision_score,
+                             roc_auc_score)
 
 warnings.filterwarnings(action="ignore", category=FutureWarning)
 import os
-import dash
-from dash import dcc
-from dash import html
 
 color_map = {
     "TN": "rgb(26,150,65)",
@@ -61,14 +46,16 @@ colors = [
     "rgb(198, 189, 34)",
     "rgb(23, 180, 207)",
 ]
+
+
 def closest_node(node, nodes, k: int):
     distances = distance.cdist([node], nodes)
     idx = np.argpartition(distances, k)
     return idx[0][0:k]
 
-def agg_df_for_app():
 
-    x = glob.glob( "./outputs/*/dataframe.csv")
+def agg_df_for_app():
+    x = glob.glob("./outputs/*/dataframe.csv")
     cwd = os.getcwd()
     for path in x:
         src = copy.copy(path)
@@ -81,15 +68,7 @@ def agg_df_for_app():
                 folders.append(path)
                 break
         folders.reverse()
-        dst = (
-            cwd
-            + "/dash_data/"
-            + folders[-3]
-            + "_"
-            + folders[-2]
-            + "_"
-            + folders[-1]
-        )
+        dst = cwd + "/dash_data/" + folders[-3] + "_" + folders[-2] + "_" + folders[-1]
         shutil.copy(src, dst)
 
 
@@ -108,6 +87,8 @@ def getdffromarrays(
     df["2"] = df[2]
     df = df.drop(labels=[0, 1, 2], axis=1)
     return df
+
+
 def kmeans_cluster_representative_without_failurelabel(
     dataframe, cla: int, class2name: dict, cla_accuracies: dict
 ):
@@ -168,7 +149,7 @@ def kmeans_cluster_representative_without_failurelabel(
     return fig3
 
 
-def overconfident_images(df,class2name):
+def overconfident_images(df, class2name):
     df["confid"] = -1
     # placeholder
     for i in range(len(df)):
@@ -224,7 +205,7 @@ def overconfident_images(df,class2name):
     return fig
 
 
-def underconfident_images(df,class2name):
+def underconfident_images(df, class2name):
     df["confid"] = -1
     # placeholder
     for i in range(len(df)):
@@ -287,7 +268,6 @@ def performe_visual_analysis(
     ls_testsets: list[str],
     domain: str,
 ):
-
     path = path + "/test_results/"
     raw_output = np.load(f"{path}raw_output.npz")
     raw_output = raw_output["arr_0"]

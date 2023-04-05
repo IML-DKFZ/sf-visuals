@@ -8,7 +8,6 @@ import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
 import yaml
-from PyPDF2 import PdfMerger
 from scipy.stats import mode
 from sklearn.decomposition import PCA
 from sklearn.manifold import TSNE
@@ -379,25 +378,25 @@ class Analyser:
                 pdfs_represantative = []
                 repres_wo_failure.savefig(path_repres_wo_failure)
 
-                merger = PdfMerger()
-                for pdf_3 in pdfs_wo_failure:
-                    merger.append(pdf_3)
-                merger.write(
-                    f"{testfodlers2create}/{testset}_imgs_represantative_wo_fail.pdf"
-                )
-                print(
-                    "Writing Represantiative to:",
-                    f"{testfodlers2create}/{testset}_imgs_represantative_wo_fail.pdf",
-                )
-
-                merger.close()
-
-                self.__encoderls[testset][cla].write_html(
-                    f"{cluster_plots_folder}/latentspace_{name}.html"
-                )
-                self.__encoderls[testset][cla].write_image(
-                    f"{cluster_plots_folder}/latentspace_{name}.png", scale=3
-                )
+                # merger = PdfMerger()
+                # for pdf_3 in pdfs_wo_failure:
+                #     merger.append(pdf_3)
+                # merger.write(
+                #     f"{testfodlers2create}/{testset}_imgs_represantative_wo_fail.pdf"
+                # )
+                # print(
+                #     "Writing Represantiative to:",
+                #     f"{testfodlers2create}/{testset}_imgs_represantative_wo_fail.pdf",
+                # )
+                #
+                # merger.close()
+                #
+                # self.__encoderls[testset][cla].write_html(
+                #     f"{cluster_plots_folder}/latentspace_{name}.html"
+                # )
+                # self.__encoderls[testset][cla].write_image(
+                #     f"{cluster_plots_folder}/latentspace_{name}.png", scale=3
+                # )
 
     def write_all(self):
         """

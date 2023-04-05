@@ -16,17 +16,20 @@ readme = "README.md"
 dependencies = [
     "pandas>=1.5.2",
     "numpy>=1.23.5",
-    "albumentations>=1.3.0",
     "dash>=2.7.0",
     "matplotlib>=3.6.2",
-    "Pillow>=9.3.0",
     "plotly>=5.11.0",
-    "scikit-learn>=1.1.3",
     "scipy>=1.9.3",
-    "torchvision>=0.14.0",
-    "kaleido==0.2.1",
-    "dash-bootstrap-components>=1.2.1",
-    "ipywidgets>=8.0.2",
+    "scikit-learn",
+]
+[project.optional-dependencies]
+dev = [
+  "pytest",
+  "ipython",
+  "ipywidgets",
+  "pylint",
+  "black",
+  "debugpy",
 ]
 
 [project.scripts]
