@@ -69,8 +69,19 @@ def main():
                             }
                             for c in analyser.testsets
                         ],
-                        analyser.testsets[0],
+                        "ALL",
                         id="checklist-testsets",
+                    ),
+                    html.H3(
+                        children="Color By:",
+                    ),
+                    dcc.RadioItems(
+                        [
+                            {"label": "Confidence", "value": "confidence"},
+                            {"label": "Source/Target", "value": "source-target"},
+                        ],
+                        "confidence",
+                        id="checklist-colorby",
                     ),
                 ],
             ),
@@ -107,9 +118,12 @@ def main():
         Output("latentspace", "figure"),
         Input("checklist-testsets", "value"),
         Input("checklist-classes", "value"),
+        Input("checklist-colorby", "value"),
     )
-    def update_testset(testset, classes):
-        return analyser.plot_latentspace(testset, classes2plot=tuple(classes))
+    def update_testset(testset, classes, colorby):
+        return analyser.plot_latentspace(
+            testset, classes2plot=tuple(classes), coloring=colorby
+        )
 
     @app.callback(
         Output("curimg", "src"),

@@ -1,6 +1,8 @@
+import itertools
 import os
 from functools import cache
 from pathlib import Path
+from typing import Literal
 
 import numpy as np
 import pandas as pd
@@ -29,7 +31,6 @@ class Analyser:
         self,
         path: Path | str,
     ) -> None:
-
         if isinstance(path, str):
             path = Path(path)
 
@@ -162,6 +163,8 @@ class Analyser:
                 filepath=fp,
             )
 
+        df["testset"] = testset
+
         testfodlers2create = os.path.join(folder2create, str(testset))
         print(testfodlers2create)
         if not os.path.exists(testfodlers2create):
@@ -171,7 +174,12 @@ class Analyser:
         return df
 
     @cache
-    def plot_latentspace(self, testset: str, classes2plot: tuple[int] | None = None):
+    def plot_latentspace(
+        self,
+        testset: str,
+        classes2plot: tuple[int] | None = None,
+        coloring: Literal["confidence", "source-target"] = "confidence",
+    ):
         if testset == "ALL":
             df = pd.concat([self.embedding(t) for t in self.__test_datasets])
         else:
@@ -200,29 +208,66 @@ class Analyser:
             "diamond-open",
             "square-open",
         ]
+        colors = [["cyan", "blue"], ["gray", "magenta"]]
+        colorscales = [[(0, "#e46c00"), (1, "#67da40")], [(0, "#56c1ff"), (1, "#ee230c")]]
 
-        fig = go.Figure()
-        for c in classes2plot:
-            data = df[(df.label == df.predicted) & (df.label == c)]
-            fig.add_trace(
-                go.Scatter3d(
-                    x=data["0"],
-                    y=data["1"],
-                    z=data["2"],
-                    opacity=0.4,
-                    mode="markers",
-                    text=data["filepath"],
-                    marker=dict(
+        def filter_by(
+            data: pd.DataFrame,
+            by: Literal["correct", "class", "testset"],
+            value: bool | int | str,
+        ):
+            match by:
+                case "correct":
+                    return data[(data.label == data.predicted) == value]
+                case "class":
+                    return data[data.label == value]
+                case "testset":
+                    return (
+                        data[data.testset == "iid"]
+                        if value == "iid"
+                        else data[data.testset != "iid"]
+                    )
+
+        if coloring == "confidence":
+            traces = [
+                (
+                    [("correct", correct), ("class", c)],
+                    f"{'C' if correct else'Inc'}orrect, C={c}",
+                    lambda data, crl=correct, cl=c: dict(
                         size=5,
                         cmin=vmin,
                         cmax=vmax,
                         color=data["confid"],
-                        colorscale=[(0, "#e46c00"), (1, "#67da40")],
-                        symbol=markers[c % len(markers)],
+                        colorscale=colorscales[0 if crl else 1],
+                        symbol=markers[cl % len(markers)],
                     ),
                 )
-            )
-            data = df[(df.label != df.predicted) & (df.label == c)]
+                for correct, c in itertools.product([True, False], classes2plot)
+            ]
+        elif coloring == "source-target":
+            traces = [
+                (
+                    [("testset", t), ("class", c)],
+                    f"C={c}, T={t}",
+                    lambda data, tl=t, cl=c: dict(
+                        size=5,
+                        cmin=vmin,
+                        cmax=vmax,
+                        color=colors[0 if tl == "iid" else 1][cl],
+                        symbol=markers[cl % len(markers)],
+                    ),
+                )
+                for t, c in itertools.product(df.testset.unique(), classes2plot)
+            ]
+        else:
+            raise ValueError
+
+        fig = go.Figure()
+
+        for filters, label, markers_fn in traces:
+            data = df
+            for by, value in filters:
+                data = filter_by(data, by, value)
             fig.add_trace(
                 go.Scatter3d(
                     x=data["0"],
@@ -230,22 +275,15 @@ class Analyser:
                     z=data["2"],
                     opacity=0.4,
                     mode="markers",
+                    name=label,
                     text=data["filepath"],
-                    marker=dict(
-                        size=5,
-                        cmin=vmin,
-                        cmax=vmax,
-                        color=data["confid"],
-                        colorscale=[(0, "#56c1ff"), (1, "#ee230c")],
-                        symbol=markers[c % len(markers)],
-                    ),
+                    marker=markers_fn(data),
                 )
             )
 
         fig.update_layout(
             coloraxis_colorbar=dict(yanchor="top", y=1, x=0, ticks="outside")
         )
-        fig.layout.hovermode = "closest"
         fig.update_layout(width=1000, height=1000, template="simple_white")
         return fig
 
