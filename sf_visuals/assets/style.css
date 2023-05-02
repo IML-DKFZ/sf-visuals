@@ -4,6 +4,31 @@
 
 .container {
   display: grid;
+  grid-template-areas: "navbar" "content";
+  gap: 1vh;
+}
+
+.tab-container {
+  grid-area: "navbar";
+}
+
+.tab {
+  color: #586069;
+  background-color: rgb(200, 200, 200) !important;
+  padding: 12px !important;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  border: none !important;
+}
+.tab--selected {
+  color: black;
+  background-color: rgb(255, 255, 255) !important;
+}
+
+.tab-content {
+  display: grid;
+  grid-area: "content";
   grid-template-columns: 1fr;
   grid-template-areas: "sidebar" "latentspace" "hover-preview";
   gap: 20px;
@@ -379,7 +404,7 @@ hr {
 –––––––––––––––––––––––––––––––––––––––––––––––––– */
 
 /* Self Clearing Goodness */
-.container:after,
+.tab-content:after,
 .row:after,
 .u-cf {
   content: "";
@@ -396,13 +421,21 @@ on small devices, paste the mobile query code up in the buttons section and styl
 there.
 */
 @media (min-width: 1300px) {
-  .container {
+  .tab-content {
     grid-template-columns: 1fr 2fr 1fr;
     grid-template-areas: "sidebar latentspace hover-preview";
-    height: 100vh;
+    height: 94vh;
+  }
+  .tab-container {
+    height: 5vh;
+    grid-area: "navbar";
+  }
+  .tab {
+    /* padding: 0px !important; */
+    /* line-height: 5vh; */
   }
   .latentspace {
-    height: 100vh;
+    height: 94vh;
     /* padding: 1vh; */
     /* margin: 0; */
   }
