@@ -125,17 +125,22 @@ def main():
                     className="tab-custom",
                     children=[
                         sidebar,
-                        dcc.Graph(
-                            id="latentspace",
-                            className="latentspace",
-                            responsive=True,
-                            clear_on_unhover=True,
+                        dcc.Loading(
+                            dcc.Graph(
+                                id="latentspace",
+                                className="latentspace",
+                                responsive=True,
+                                clear_on_unhover=True,
+                            ),
+                            className="latentspace-loading",
                         ),
                         html.Div(
+                            dcc.Loading(
+                                html.Div(
+                                    id="hover-preview",
+                                ),
+                            ),
                             className="hover-preview",
-                            children=[
-                                html.Img(id="curimg", width="512px", height="512px"),
-                            ],
                         ),
                         html.Div(children=[], hidden=True, id="dummy"),
                     ],
@@ -171,7 +176,7 @@ def main():
         Input("checklist-colorby", "value"),
     )
     def update_testset(testset, classes, colorby):
-        figure =  app_state.analyser.plot_latentspace(
+        figure = app_state.analyser.plot_latentspace(
             testset, classes2plot=tuple(classes), coloring=colorby
         )
 
@@ -180,7 +185,7 @@ def main():
         return figure
 
     @app.callback(
-        Output("curimg", "src"),
+        Output("hover-preview", "children"),
         Input("latentspace", "hoverData"),
         Input("latentspace", "clickData"),
     )
@@ -196,7 +201,12 @@ def main():
         )
         with open(imgpath, "rb") as img:
             data = base64.b64encode(img.read()).replace(b"\n", b"").decode("utf-8")
-            return f"data:image/jpeg;base64,{data}"
+            return html.Img(
+                id="curimg",
+                width="512px",
+                height="512px",
+                src=f"data:image/jpeg;base64,{data}",
+            )
 
     @app.callback(
         Output("sidebar", "children"),
