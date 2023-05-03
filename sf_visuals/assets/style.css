@@ -26,13 +26,20 @@
   background-color: rgb(255, 255, 255) !important;
 }
 
-.tab-content {
+.tab-custom {
   display: grid;
   grid-area: "content";
   grid-template-columns: 1fr;
-  grid-template-areas: "sidebar" "latentspace" "hover-preview";
   gap: 20px;
   height: 100vh;
+}
+
+#tab-latentspace {
+  grid-template-areas: "sidebar" "latentspace" "hover-preview";
+}
+
+#tab-failures {
+  grid-template-areas: "sidebar-fail" "failure-view";
 }
 
 .hover-preview {
@@ -69,6 +76,15 @@
   background-color: rgb(255, 255, 255);
 }
 
+.failure-view {
+  /* width: 20%; */
+  grid-area: failure-view;
+  max-width: 100%;
+  margin: 1vw;
+  padding: 0.5vw;
+  background-color: rgb(255, 255, 255);
+}
+
 /* Base Styles
 –––––––––––––––––––––––––––––––––––––––––––––––––– */
 /* NOTE
@@ -81,7 +97,7 @@ html {
   margin: 0;
 }
 body {
-  font-size: 1.5em; /* currently ems cause chrome bug misinterpreting rems on body element */
+  font-size: 1.2rem; /* currently ems cause chrome bug misinterpreting rems on body element */
   line-height: 1.6;
   font-weight: 400;
   font-family: "Open Sans", "HelveticaNeue", "Helvetica Neue", Helvetica, Arial,
@@ -421,10 +437,17 @@ on small devices, paste the mobile query code up in the buttons section and styl
 there.
 */
 @media (min-width: 1300px) {
-  .tab-content {
+  .tab-custom {
+    height: 94vh;
+  }
+  #tab-latentspace {
     grid-template-columns: 1fr 2fr 1fr;
     grid-template-areas: "sidebar latentspace hover-preview";
-    height: 94vh;
+  }
+
+  #tab-failures {
+    grid-template-columns: 1fr 3fr;
+    grid-template-areas: "sidebar-fail failure-view";
   }
   .tab-container {
     height: 5vh;
