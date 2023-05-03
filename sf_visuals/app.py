@@ -128,9 +128,6 @@ def main():
                         dcc.Graph(
                             id="latentspace",
                             className="latentspace",
-                            figure=app_state.analyser.plot_latentspace(
-                                app_state.analyser.testsets[1]
-                            ),
                             responsive=True,
                             clear_on_unhover=True,
                         ),
@@ -174,9 +171,13 @@ def main():
         Input("checklist-colorby", "value"),
     )
     def update_testset(testset, classes, colorby):
-        return app_state.analyser.plot_latentspace(
+        figure =  app_state.analyser.plot_latentspace(
             testset, classes2plot=tuple(classes), coloring=colorby
         )
+
+        figure["layout"]["uirevision"] = True
+
+        return figure
 
     @app.callback(
         Output("curimg", "src"),
