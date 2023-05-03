@@ -11,6 +11,7 @@ from sf_visuals.analyser import Analyser
 
 @dataclass
 class AppState:
+    path: Path
     analyser: Analyser
 
 
@@ -21,7 +22,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--path", type=Path)
     args = parser.parse_args()
-    app_state = AppState(analyser=Analyser(path=args.path))
+    app_state = AppState(path=args.path, analyser=Analyser(path=args.path))
     base_path = Path(
         "/home/t974t/NetworkDrives/E130-Personal/Kobelke/cluster_checkpoints/"
     )
@@ -35,12 +36,13 @@ def main():
     def sidebar_content(app_state: AppState):
         return [
             html.H2(
-                children=f"Experiment folder:",
+                children="Experiment folder:",
             ),
             dcc.Dropdown(
                 all_paths,
-                str(args.path.relative_to(base_path)),
+                str(app_state.path.relative_to(base_path)),
                 id="base-path-dd",
+                clearable=False,
             ),
             html.Div(id="path-display-dd"),
             html.H3(
@@ -200,6 +202,7 @@ def main():
         Input("base-path-dd", "value"),
     )
     def update_path(value):
+        app_state.path = base_path / value
         app_state.analyser = Analyser(path=base_path / value)
         return sidebar_content(app_state)
 
