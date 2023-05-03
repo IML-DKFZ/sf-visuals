@@ -252,7 +252,7 @@ class Analyser:
                         size=5,
                         cmin=vmin,
                         cmax=vmax,
-                        color=colors[0 if tl == "iid" else 1][cl],
+                        color=colors[0 if tl == "iid" else 1][cl % len(colors[0 if tl == "iid" else 1])],
                         symbol=markers[cl % len(markers)],
                     ),
                 )
