@@ -1,11 +1,17 @@
 import argparse
 import base64
+from dataclasses import dataclass
 from pathlib import Path
 
 from dash import ALL, Dash, Input, Output, State, dcc, html
 from dash.exceptions import PreventUpdate
 
 from sf_visuals.analyser import Analyser
+
+
+@dataclass
+class AppState:
+    analyser: Analyser
 
 
 def main():
@@ -15,7 +21,96 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--path", type=Path)
     args = parser.parse_args()
-    analyser = Analyser(path=args.path)
+    app_state = AppState(analyser=Analyser(path=args.path))
+    base_path = Path(
+        "/home/t974t/NetworkDrives/E130-Personal/Kobelke/cluster_checkpoints/"
+    )
+    all_paths = sorted(
+        [
+            str(path.parent.relative_to(base_path))
+            for path in base_path.glob("**/test_results")
+        ]
+    )
+
+    def sidebar_content(app_state: AppState):
+        return [
+            html.H2(
+                children=f"Experiment folder:",
+            ),
+            dcc.Dropdown(
+                all_paths,
+                str(args.path.relative_to(base_path)),
+                id="base-path-dd",
+            ),
+            html.Div(id="path-display-dd"),
+            html.H3(
+                children="Classes:",
+            ),
+            dcc.Checklist(
+                [
+                    {
+                        "label": html.Div(
+                            [
+                                f"Class {c}: ",
+                                dcc.Input(
+                                    id={
+                                        "type": "class-name",
+                                        "id": f"{c}",
+                                    },
+                                    type="text",
+                                    value=f"{c}",
+                                ),
+                            ],
+                            style={"display": "inline-block"},
+                        ),
+                        "value": c,
+                    }
+                    for c in app_state.analyser.classes
+                ],
+                app_state.analyser.classes,
+                id="checklist-classes",
+            ),
+            html.H3(
+                children="Datasets:",
+            ),
+            dcc.RadioItems(
+                [{"label": "All", "value": "ALL"}]
+                + [
+                    {
+                        "label": html.Div(
+                            [
+                                f"Testset {c}",
+                            ],
+                            style={"display": "inline-block"},
+                        ),
+                        "value": c,
+                    }
+                    for c in app_state.analyser.testsets
+                ],
+                "ALL",
+                id="checklist-testsets",
+            ),
+            html.H3(
+                children="Color By:",
+            ),
+            dcc.RadioItems(
+                [
+                    {"label": "Confidence", "value": "confidence"},
+                    {
+                        "label": "Source/Target",
+                        "value": "source-target",
+                    },
+                ],
+                "confidence",
+                id="checklist-colorby",
+            ),
+        ]
+
+    sidebar = html.Div(
+        id="sidebar",
+        style={"display": "inline-block"},
+        children=sidebar_content(app_state),
+    )
 
     app.layout = dcc.Tabs(
         parent_className="container",
@@ -23,95 +118,38 @@ def main():
         children=[
             dcc.Tab(
                 label="Latent Space",
-                children=[
-                    html.Div(
-                        id="sidebar",
-                        style={"display": "inline-block"},
-                        children=[
-                            html.H2(
-                                children=f"Experiment folder:",
+                children=html.Div(
+                    id="tab-latentspace",
+                    className="tab-custom",
+                    children=[
+                        sidebar,
+                        dcc.Graph(
+                            id="latentspace",
+                            className="latentspace",
+                            figure=app_state.analyser.plot_latentspace(
+                                app_state.analyser.testsets[1]
                             ),
-                            html.P(f"{args.path}"),
-                            html.H3(
-                                children="Classes:",
-                            ),
-                            dcc.Checklist(
-                                [
-                                    {
-                                        "label": html.Div(
-                                            [
-                                                f"Class {c}: ",
-                                                dcc.Input(
-                                                    id={
-                                                        "type": "class-name",
-                                                        "id": f"{c}",
-                                                    },
-                                                    type="text",
-                                                    value=f"{c}",
-                                                ),
-                                            ],
-                                            style={"display": "inline-block"},
-                                        ),
-                                        "value": c,
-                                    }
-                                    for c in analyser.classes
-                                ],
-                                analyser.classes,
-                                id="checklist-classes",
-                            ),
-                            html.H3(
-                                children="Datasets:",
-                            ),
-                            dcc.RadioItems(
-                                [{"label": "All", "value": "ALL"}]
-                                + [
-                                    {
-                                        "label": html.Div(
-                                            [
-                                                f"Testset {c}",
-                                            ],
-                                            style={"display": "inline-block"},
-                                        ),
-                                        "value": c,
-                                    }
-                                    for c in analyser.testsets
-                                ],
-                                "ALL",
-                                id="checklist-testsets",
-                            ),
-                            html.H3(
-                                children="Color By:",
-                            ),
-                            dcc.RadioItems(
-                                [
-                                    {"label": "Confidence", "value": "confidence"},
-                                    {
-                                        "label": "Source/Target",
-                                        "value": "source-target",
-                                    },
-                                ],
-                                "confidence",
-                                id="checklist-colorby",
-                            ),
-                        ],
-                    ),
-                    dcc.Graph(
-                        id="latentspace",
-                        className="latentspace",
-                        figure=analyser.plot_latentspace(analyser.testsets[1]),
-                        responsive=True,
-                        clear_on_unhover=True,
-                    ),
-                    html.Div(
-                        className="hover-preview",
-                        children=[
-                            html.Img(id="curimg", width="512px", height="512px"),
-                        ],
-                    ),
-                    html.Div(children=[], hidden=True, id="dummy"),
-                ],
+                            responsive=True,
+                            clear_on_unhover=True,
+                        ),
+                        html.Div(
+                            className="hover-preview",
+                            children=[
+                                html.Img(id="curimg", width="512px", height="512px"),
+                            ],
+                        ),
+                        html.Div(children=[], hidden=True, id="dummy"),
+                    ],
+                ),
             ),
-            dcc.Tab(label="Failures", children=[html.H2("WIP")]),
+            dcc.Tab(
+                label="Failures",
+                children=html.Div(
+                    id="tab-failures",
+                    className="tab-custom",
+                    children=[html.H2("WIP", className="failure-view")],
+                ),
+            ),
         ],
     )
 
@@ -124,7 +162,7 @@ def main():
         classes = {}
         for i, v in zip(id, value):
             classes[int(i["id"])] = v
-        analyser.classes = classes
+        app_state.analyser.classes = classes
         return None
 
     @app.callback(
@@ -134,7 +172,7 @@ def main():
         Input("checklist-colorby", "value"),
     )
     def update_testset(testset, classes, colorby):
-        return analyser.plot_latentspace(
+        return app_state.analyser.plot_latentspace(
             testset, classes2plot=tuple(classes), coloring=colorby
         )
 
@@ -156,6 +194,14 @@ def main():
         with open(imgpath, "rb") as img:
             data = base64.b64encode(img.read()).replace(b"\n", b"").decode("utf-8")
             return f"data:image/jpeg;base64,{data}"
+
+    @app.callback(
+        Output("sidebar", "children"),
+        Input("base-path-dd", "value"),
+    )
+    def update_path(value):
+        app_state.analyser = Analyser(path=base_path / value)
+        return sidebar_content(app_state)
 
     app.run(host="0.0.0.0", debug=True, port="8055")
 
