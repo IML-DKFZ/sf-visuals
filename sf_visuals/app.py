@@ -115,57 +115,62 @@ def main():
         children=sidebar_content(app_state),
     )
 
-    app.layout = dcc.Tabs(
-        parent_className="container",
-        className="tab-container",
+    app.layout = html.Div(
+        className="app-container",
         children=[
-            dcc.Tab(
-                label="Latent Space",
-                children=html.Div(
-                    id="tab-latentspace",
-                    className="tab-custom",
-                    children=[
-                        sidebar,
-                        dcc.Loading(
-                            dcc.Graph(
-                                id="latentspace",
-                                className="latentspace",
-                                responsive=True,
-                                clear_on_unhover=True,
-                            ),
-                            className="latentspace-loading",
-                        ),
-                        html.Div(
-                            dcc.Loading(
-                                html.Div(
-                                    id="hover-preview",
+            sidebar,
+            dcc.Tabs(
+                parent_className="container",
+                className="tab-container",
+                children=[
+                    dcc.Tab(
+                        label="Latent Space",
+                        children=html.Div(
+                            id="tab-latentspace",
+                            className="tab-custom",
+                            children=[
+                                dcc.Loading(
+                                    dcc.Graph(
+                                        id="latentspace",
+                                        className="latentspace",
+                                        responsive=True,
+                                        clear_on_unhover=True,
+                                    ),
+                                    className="latentspace-loading",
                                 ),
-                            ),
-                            className="hover-preview",
+                                html.Div(
+                                    dcc.Loading(
+                                        html.Div(
+                                            id="hover-preview",
+                                        ),
+                                    ),
+                                    className="hover-preview",
+                                ),
+                                html.Div(children=[], hidden=True, id="dummy"),
+                            ],
                         ),
-                        html.Div(children=[], hidden=True, id="dummy"),
-                    ],
-                ),
-            ),
-            dcc.Tab(
-                label="Failures",
-                children=html.Div(
-                    id="tab-failures",
-                    className="tab-custom",
-                    children=[
-                        dcc.Loading(
-                            html.Div(
-                                id="representative-view",
-                                className="representative-view",
-                            ),
-                            # className="latentspace-loading",
+                    ),
+                    dcc.Tab(
+                        label="Failures",
+                        children=html.Div(
+                            id="tab-failures",
+                            className="tab-custom",
+                            children=[
+                                dcc.Loading(
+                                    html.Div(
+                                        id="representative-view",
+                                        className="representative-view",
+                                    ),
+                                    # className="latentspace-loading",
+                                ),
+                                html.Div(
+                                    id="failure-view",
+                                    className="failure-view",
+                                ),
+                            ],
                         ),
-                        html.Div(
-                            id="failure-view",
-                            className="failure-view",
-                        ),
-                    ],
-                ),
+                    ),
+                ],
             ),
         ],
     )
@@ -200,11 +205,18 @@ def main():
     @app.callback(
         Output("representative-view", "children"),
         Input("base-path-dd", "value"),
+        Input("checklist-classes", "value"),
+        Input("checklist-testsets", "value"),
     )
-    def update_testset2(value):
+    def update_testset2(base_path, classes, testsets):
+        if testsets == "ALL":
+            testsets = app_state.analyser.testsets
+        else:
+            testsets = [testsets]
+
         imgs = []
         for testset, cls in itertools.product(
-            app_state.analyser.testsets, range(len(app_state.analyser.classes))
+            testsets, classes
         ):
             svg = app_state.analyser.representative(testset, cls)
             data = base64.b64encode(svg).replace(b"\n", b"").decode("utf-8")

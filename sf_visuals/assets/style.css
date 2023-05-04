@@ -2,10 +2,18 @@
   box-sizing: border-box;
 }
 
+.app-container {
+  display: grid;
+  grid-template-columns: 1fr 4fr;
+  grid-template-areas: "sidebar" "container";
+  gap: 1vh;
+}
+
 .container {
   display: grid;
   grid-template-areas: "navbar" "content";
   gap: 1vh;
+  grid-area: "container";
 }
 
 .tab-container {
@@ -35,7 +43,7 @@
 }
 
 #tab-latentspace {
-  grid-template-areas: "sidebar" "latentspace" "hover-preview";
+  grid-template-areas: "latentspace" "hover-preview";
 }
 
 #tab-failures {
@@ -466,8 +474,8 @@ there.
     height: 94vh;
   }
   #tab-latentspace {
-    grid-template-columns: 1fr 2fr 1fr;
-    grid-template-areas: "sidebar latentspace hover-preview";
+    grid-template-columns: 2fr 1fr;
+    grid-template-areas: "latentspace hover-preview";
   }
 
   #tab-failures {

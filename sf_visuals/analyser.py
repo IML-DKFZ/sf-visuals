@@ -291,6 +291,7 @@ class Analyser:
         fig.update_layout(width=1000, height=1000, template="simple_white")
         return fig
 
+    @cache
     def representative(self, testset, cls):
         df = self.embedding(testset)
         fig = kmeans_cluster_representative_without_failurelabel(
