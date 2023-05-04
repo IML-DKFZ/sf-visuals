@@ -292,6 +292,7 @@ class Analyser:
                     mode="markers",
                     name=label,
                     text=data["filepath"],
+                    hoverinfo="name",
                     marker=markers_fn(data),
                 )
             )
