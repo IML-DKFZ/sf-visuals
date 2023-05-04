@@ -76,22 +76,30 @@ def main():
             html.H3(
                 children="Datasets:",
             ),
-            dcc.RadioItems(
-                [{"label": "All", "value": "ALL"}]
-                + [
-                    {
-                        "label": html.Div(
-                            [
-                                f"Testset {c}",
-                            ],
-                            style={"display": "inline-block"},
-                        ),
-                        "value": c,
-                    }
-                    for c in app_state.analyser.testsets
-                ],
-                "ALL",
+            dcc.Checklist(
+                ["iid", "ood"],
+                ["iid", "ood"],
                 id="checklist-testsets",
+            ),
+            html.Div(
+                dcc.RadioItems(
+                    [
+                        {
+                            "label": html.Div(
+                                [
+                                    f"Testset {c}",
+                                ],
+                                style={"display": "inline-block"},
+                            ),
+                            "value": c,
+                        }
+                        for c in app_state.analyser.testsets
+                        if c != "iid"
+                    ],
+                    [c for c in app_state.analyser.testsets if c != "iid"][0],
+                    id="selection-testset",
+                ),
+                id="container-selection-testset",
             ),
             html.H3(
                 children="Color By:",
@@ -190,12 +198,24 @@ def main():
     @app.callback(
         Output("latentspace", "figure"),
         Input("checklist-testsets", "value"),
+        Input("selection-testset", "value"),
         Input("checklist-classes", "value"),
         Input("checklist-colorby", "value"),
     )
-    def update_testset(testset, classes, colorby):
+    def update_testset(iid_ood, testset: str, classes, colorby):
+        testsets = []
+        if "iid" in iid_ood:
+            testsets.append("iid")
+        if "ood" in iid_ood:
+            testsets.append(testset)
+
+        if len(testsets) == 0:
+            return None
+
+        print(testsets)
+
         figure = app_state.analyser.plot_latentspace(
-            testset, classes2plot=tuple(classes), coloring=colorby
+            tuple(testsets), classes2plot=tuple(classes), coloring=colorby
         )
 
         figure["layout"]["uirevision"] = True
@@ -206,18 +226,22 @@ def main():
         Output("representative-view", "children"),
         Input("base-path-dd", "value"),
         Input("checklist-classes", "value"),
+        Input("selection-testset", "value"),
         Input("checklist-testsets", "value"),
     )
-    def update_testset2(base_path, classes, testsets):
-        if testsets == "ALL":
-            testsets = app_state.analyser.testsets
-        else:
-            testsets = [testsets]
+    def update_testset2(base_path, classes, testset, iid_ood):
+        testsets = []
+        if "iid" in iid_ood:
+            testsets.append("iid")
+        if "ood" in iid_ood:
+            testsets.append(testset)
+
+        if len(testsets) == 0:
+            return None
+        print(testsets)
 
         imgs = []
-        for testset, cls in itertools.product(
-            testsets, classes
-        ):
+        for testset, cls in itertools.product(testsets, classes):
             svg = app_state.analyser.representative(testset, cls)
             data = base64.b64encode(svg).replace(b"\n", b"").decode("utf-8")
             imgs.append(

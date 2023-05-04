@@ -69,7 +69,7 @@ class Analyser:
         flat_test_set_list = list(map(_rename_datasets, flat_test_set_list))
 
         self.__ls_testsets = flat_test_set_list
-        self.__test_datasets = flat_test_set_list[1:3]
+        self.__test_datasets = flat_test_set_list[1:]
 
         self.__test_datasets_length = len(self.__ls_testsets)
         self.__csvs = []
@@ -180,14 +180,11 @@ class Analyser:
     @cache
     def plot_latentspace(
         self,
-        testset: str,
+        testsets: tuple[str, ...],
         classes2plot: tuple[int] | None = None,
         coloring: Literal["confidence", "source-target"] = "confidence",
     ):
-        if testset == "ALL":
-            df = pd.concat([self.embedding(t) for t in self.__test_datasets])
-        else:
-            df = self.embedding(testset)
+        df = pd.concat([self.embedding(t) for t in testsets])
 
         if classes2plot is None:
             classes2plot = self.__class2plot
@@ -292,7 +289,7 @@ class Analyser:
         return fig
 
     @cache
-    def representative(self, testset, cls):
+    def representative(self, testset: str, cls: int):
         df = self.embedding(testset)
         fig = kmeans_cluster_representative_without_failurelabel(
             dataframe=df,
