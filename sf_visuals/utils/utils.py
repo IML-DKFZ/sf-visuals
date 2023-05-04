@@ -172,8 +172,11 @@ def overconfident_images(df, class2name):
     rows = 3
     k = columns * rows
 
+    stats = []
+
     for i in range(1, columns * rows + 1):
         fig.add_subplot(rows, columns, i)
+        aidx = i - 1
         if i == 2:
             i = 6  # avoid duplicat in isic
         if i == 3:
@@ -181,18 +184,18 @@ def overconfident_images(df, class2name):
 
         file = df_oc_first.filepath[i - 1]
         # for cluster images
-        start, end = file.split("l049e/")
-        file = "/home/l049e/Data/" + end
+        start, end = file.split("levin/")
+        # file = "/home/t974t/Data/levin/" + end
         label = df_oc_first.label[i - 1]
         label = int(label)
         pred = df_oc_first.predicted[i - 1]
         lab_pred = f"{label=}, {pred=}"
-        print(file)
+        print(f"OVER {i}: {file}")
         try:
             im = cv2.imread(file)
             RGB_im = cv2.cvtColor(im, cv2.COLOR_BGR2RGB)
         except:
-            file = "/home/l049e/E130-Personal/Kobelke/" + end
+            file = "/home/t974t/NetworkDrives/E130-Personal/Kobelke/" + end
             im = cv2.imread(file)
             RGB_im = cv2.cvtColor(im, cv2.COLOR_BGR2RGB)
         plt.imshow(RGB_im)
@@ -204,12 +207,18 @@ def overconfident_images(df, class2name):
 
         matplotlib.rc("font", **font)
         plt.axis("off")
-        plt.subplots_adjust(hspace=0.4)
-        plt.subplots_adjust(wspace=0.0001)
-        title = f"L: {class2name[label]} \nP: {class2name[pred]} \nC: {conf:.2f}"
-        plt.title(title, loc="left")
+        # plt.subplots_adjust(hspace=0)
+        # plt.subplots_adjust(wspace=0)
+        # plt.margins(x=0)
+        # plt.subplots_adjust(left=0, right=1, top=1, bottom=0)
+        plt.subplots_adjust(hspace=0, wspace=0, left=0, right=1, top=1, bottom=0)
+        # title = f"L: {class2name[label]} \nP: {class2name[pred]} \nC: {conf:.2f}"
+        # axes[aidx].annotate(
+        #     title, xy=(1, 0.5), xycoords="axes fraction", ha="left", va="center"
+        # )
+        stats.append({"label": label, "pred": pred, "conf": conf})
 
-    return fig
+    return fig, stats
 
 
 def underconfident_images(df, class2name):

@@ -18,7 +18,6 @@ class AppState:
 
 def main():
     app = Dash(__name__)
-    colors = {"background": "white", "text": "black"}
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--path", type=Path)
@@ -171,9 +170,11 @@ def main():
                                     ),
                                     # className="latentspace-loading",
                                 ),
-                                html.Div(
-                                    id="failure-view",
-                                    className="failure-view",
+                                dcc.Loading(
+                                    html.Div(
+                                        id="failure-view",
+                                        className="failure-view",
+                                    ),
                                 ),
                             ],
                         ),
@@ -248,6 +249,44 @@ def main():
                 html.Div(
                     children=[
                         html.H5(f"Testset: {testset}, Class: {cls}"),
+                        html.Img(
+                            id="curimg",
+                            width="512px",
+                            height="512px",
+                            src=f"data:image/svg;base64,{data}",
+                        ),
+                    ]
+                )
+            )
+
+        return imgs
+
+    @app.callback(
+        Output("failure-view", "children"),
+        Input("base-path-dd", "value"),
+        Input("checklist-classes", "value"),
+        Input("selection-testset", "value"),
+        Input("checklist-testsets", "value"),
+    )
+    def update_testset3(base_path, classes, testset, iid_ood):
+        testsets = []
+        if "iid" in iid_ood:
+            testsets.append("iid")
+        if "ood" in iid_ood:
+            testsets.append(testset)
+
+        if len(testsets) == 0:
+            return None
+        print(testsets)
+
+        imgs = []
+        for testset in testsets:
+            svg, stats = app_state.analyser.overconfident(testset)
+            data = base64.b64encode(svg).replace(b"\n", b"").decode("utf-8")
+            imgs.append(
+                html.Div(
+                    children=[
+                        html.H5(f"Testset: {testset}"),
                         html.Img(
                             id="curimg",
                             width="512px",

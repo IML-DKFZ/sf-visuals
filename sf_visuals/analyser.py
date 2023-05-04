@@ -1,7 +1,7 @@
-from io import BytesIO
 import itertools
 import os
 from functools import cache
+from io import BytesIO
 from pathlib import Path
 from typing import Literal
 
@@ -210,7 +210,10 @@ class Analyser:
             "square-open",
         ]
         colors = [["cyan", "blue"], ["gray", "magenta"]]
-        colorscales = [[(0, "#e46c00"), (1, "#67da40")], [(0, "#56c1ff"), (1, "#ee230c")]]
+        colorscales = [
+            [(0, "#e46c00"), (1, "#67da40")],
+            [(0, "#56c1ff"), (1, "#ee230c")],
+        ]
 
         def filter_by(
             data: pd.DataFrame,
@@ -254,7 +257,9 @@ class Analyser:
                         size=5,
                         cmin=vmin,
                         cmax=vmax,
-                        color=colors[0 if tl == "iid" else 1][cl % len(colors[0 if tl == "iid" else 1])],
+                        color=colors[0 if tl == "iid" else 1][
+                            cl % len(colors[0 if tl == "iid" else 1])
+                        ],
                         symbol=markers[cl % len(markers)],
                     ),
                 )
@@ -298,6 +303,17 @@ class Analyser:
         strio = BytesIO()
         fig.savefig(strio, format="png")
         return strio.getvalue()
+
+    @cache
+    def overconfident(self, testset: str):
+        """
+        return matplotlib plot with overconfident images
+        """
+        df = self.embedding(testset)
+        fig, stats = overconfident_images(df=df, class2name=self.__class2name)
+        strio = BytesIO()
+        fig.savefig(strio, format="png")
+        return strio.getvalue(), stats
 
     def show_underconfident(self):
         """
