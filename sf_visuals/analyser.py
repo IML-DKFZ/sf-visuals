@@ -5,17 +5,22 @@ from io import BytesIO
 from pathlib import Path
 from typing import Literal
 
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
 import yaml
+from loguru import logger
 from scipy.stats import mode
 from sklearn.decomposition import PCA
 from sklearn.manifold import TSNE
 
 from sf_visuals.utils.utils import (
-    getdffromarrays, kmeans_cluster_representative_without_failurelabel,
-    overconfident_images, underconfident_images)
+    getdffromarrays,
+    kmeans_cluster_representative_without_failurelabel,
+    overconfident_images,
+    underconfident_images,
+)
 
 
 class Analyser:
@@ -35,7 +40,7 @@ class Analyser:
             path = Path(path)
 
         self.__path = path / "test_results"
-        # Loading Data from init parameters
+        logger.info("Loading Data for {}", path)
         self.__raw_output = np.load(self.__path / "raw_output.npz")["arr_0"]
         self.__softmax_output = self.__raw_output[:, :-2]
         self.__out_class = np.argmax(np.squeeze(self.__softmax_output), axis=1)
@@ -117,6 +122,7 @@ class Analyser:
             "rgb(198, 189, 34)",
             "rgb(23, 180, 207)",
         ]
+        logger.info("Done initializating Analyzer")
 
     @property
     def classes(self):
@@ -132,6 +138,8 @@ class Analyser:
 
     @cache
     def embedding(self, testset: str):
+        logger.info("Computing embedding for {}", testset)
+
         i = self.__ls_testsets.index(testset)
         study = str(self.__ls_testsets[i])
         boolarray = self.__encoded_output[:, -1] == i
@@ -148,6 +156,7 @@ class Analyser:
         folder2create = os.path.join(cwd, "outputs", dir[0], dir[1])
         check_file = folder2create + "/" + study + "/dataframe.csv"
         if os.path.exists(check_file):
+            logger.info("Found cached embedding {}", check_file)
             df = pd.read_csv(check_file, index_col=False)
         else:
             pca50 = PCA(n_components=50)
@@ -170,8 +179,8 @@ class Analyser:
         df["testset"] = testset
 
         testfodlers2create = os.path.join(folder2create, str(testset))
-        print(testfodlers2create)
         if not os.path.exists(check_file):
+            logger.info("Writing embedding to cache {}", check_file)
             os.makedirs(testfodlers2create, exist_ok=True)
             df.to_csv(testfodlers2create + "/dataframe.csv", index=False)
 
@@ -302,6 +311,7 @@ class Analyser:
         )
         strio = BytesIO()
         fig.savefig(strio, format="png")
+        plt.close(fig)
         return strio.getvalue()
 
     @cache
@@ -313,6 +323,7 @@ class Analyser:
         fig, stats = overconfident_images(df=df, class2name=self.__class2name)
         strio = BytesIO()
         fig.savefig(strio, format="png")
+        plt.close(fig)
         return strio.getvalue(), stats
 
     def show_underconfident(self):

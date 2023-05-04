@@ -6,6 +6,7 @@ from pathlib import Path
 
 from dash import ALL, Dash, Input, Output, State, dcc, html
 from dash.exceptions import PreventUpdate
+from loguru import logger
 
 from sf_visuals.analyser import Analyser
 
@@ -213,7 +214,7 @@ def main():
         if len(testsets) == 0:
             return None
 
-        print(testsets)
+        logger.info("Testsets to display: {}", testsets)
 
         figure = app_state.analyser.plot_latentspace(
             tuple(testsets), classes2plot=tuple(classes), coloring=colorby
@@ -239,7 +240,7 @@ def main():
 
         if len(testsets) == 0:
             return None
-        print(testsets)
+        logger.info("Testsets to display: {}", testsets)
 
         imgs = []
         for testset, cls in itertools.product(testsets, classes):
@@ -277,7 +278,7 @@ def main():
 
         if len(testsets) == 0:
             return None
-        print(testsets)
+        logger.info("Testsets to display: {}", testsets)
 
         imgs = []
         for testset in testsets:

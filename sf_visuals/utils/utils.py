@@ -6,6 +6,7 @@ import matplotlib
 import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
+from loguru import logger
 from matplotlib import pyplot as plt
 from PIL import Image
 from scipy.spatial import distance
@@ -128,7 +129,7 @@ def kmeans_cluster_representative_without_failurelabel(
         fig3.add_subplot(rows, columns, i)
         file = sub_df["filepath"].iloc[ids[0]]
         # for cluster datapath in fp
-        print(file)
+        logger.info("Reading representative image {}", file)
         start, end = file.split("levin/")
         # file = "/home/t974t/Data/levin/" + end
         try:
@@ -189,7 +190,7 @@ def overconfident_images(df, class2name):
         label = int(label)
         pred = df_oc_first.predicted[i - 1]
         lab_pred = f"{label=}, {pred=}"
-        print(f"OVER {i}: {file}")
+        logger.info("Reading overconfident image {}", file)
         try:
             im = Image.open(file)
             im = np.asarray(im)

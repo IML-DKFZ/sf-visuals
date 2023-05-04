@@ -15,24 +15,25 @@ license = { text = "MIT" }
 readme = "README.md"
 dependencies = [
     "dash>=2.7.0",
+    "loguru",
     "matplotlib>=3.6.2",
     "numpy>=1.23.5",
-    "Pillow",
     "pandas>=1.5.2",
+    "Pillow",
     "plotly>=5.11.0",
     "scikit-learn",
     "scipy>=1.9.3",
 ]
 [project.optional-dependencies]
 dev = [
-    "pytest",
-    "ipython",
-    "ipywidgets",
-    "pylint",
     "black",
     "debugpy",
+    "ipython",
+    "ipywidgets",
     "isort",
     "pre-commit",
+    "pylint",
+    "pytest",
 ]
 
 [project.scripts]
