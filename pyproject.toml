@@ -14,22 +14,25 @@ authors = [
 license = { text = "MIT" }
 readme = "README.md"
 dependencies = [
-    "pandas>=1.5.2",
-    "numpy>=1.23.5",
     "dash>=2.7.0",
     "matplotlib>=3.6.2",
+    "numpy>=1.23.5",
+    "opencv-python",
+    "pandas>=1.5.2",
     "plotly>=5.11.0",
-    "scipy>=1.9.3",
     "scikit-learn",
+    "scipy>=1.9.3",
 ]
 [project.optional-dependencies]
 dev = [
-  "pytest",
-  "ipython",
-  "ipywidgets",
-  "pylint",
-  "black",
-  "debugpy",
+    "pytest",
+    "ipython",
+    "ipywidgets",
+    "pylint",
+    "black",
+    "debugpy",
+    "isort",
+    "pre-commit",
 ]
 
 [project.scripts]
@@ -40,3 +43,19 @@ write_to = "sf_visuals/_version.py"
 
 [tool.setuptools.packages]
 find = {}
+
+[tool.isort]
+profile = "black"
+
+[tool.black]
+line-length = 88
+exclude = '''
+
+(
+  /(
+      \.git
+    | \.venv
+    | _build
+  )/
+)
+'''
