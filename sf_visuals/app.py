@@ -1,5 +1,6 @@
 import argparse
 import base64
+import itertools
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -151,7 +152,19 @@ def main():
                 children=html.Div(
                     id="tab-failures",
                     className="tab-custom",
-                    children=[html.H2("WIP", className="failure-view")],
+                    children=[
+                        dcc.Loading(
+                            html.Div(
+                                id="representative-view",
+                                className="representative-view",
+                            ),
+                            # className="latentspace-loading",
+                        ),
+                        html.Div(
+                            id="failure-view",
+                            className="failure-view",
+                        ),
+                    ],
                 ),
             ),
         ],
@@ -183,6 +196,33 @@ def main():
         figure["layout"]["uirevision"] = True
 
         return figure
+
+    @app.callback(
+        Output("representative-view", "children"),
+        Input("base-path-dd", "value"),
+    )
+    def update_testset2(value):
+        imgs = []
+        for testset, cls in itertools.product(
+            app_state.analyser.testsets, range(len(app_state.analyser.classes))
+        ):
+            svg = app_state.analyser.representative(testset, cls)
+            data = base64.b64encode(svg).replace(b"\n", b"").decode("utf-8")
+            imgs.append(
+                html.Div(
+                    children=[
+                        html.H5(f"Testset: {testset}, Class: {cls}"),
+                        html.Img(
+                            id="curimg",
+                            width="512px",
+                            height="512px",
+                            src=f"data:image/svg;base64,{data}",
+                        ),
+                    ]
+                )
+            )
+
+        return imgs
 
     @app.callback(
         Output("hover-preview", "children"),

@@ -1,3 +1,4 @@
+from io import BytesIO
 import itertools
 import os
 from functools import cache
@@ -80,6 +81,10 @@ class Analyser:
                 attributions = pd.read_csv(self.__path / f"attributions{i}.csv")
             except:
                 attributions = pd.read_csv(self.__path / "attributions.csv")
+
+            attributions.filepath = attributions.filepath.str.replace(
+                "/dkfz/cluster/gpu/data/OE0612/l049e", "/home/t974t/Data/levin"
+            )
             self.__csvs.append(attributions)
         self.__softmax_beginning = np.squeeze(self.__softmax_output)
         self.n_classes = len(np.unique(self.__labels))
@@ -285,6 +290,16 @@ class Analyser:
         )
         fig.update_layout(width=1000, height=1000, template="simple_white")
         return fig
+
+    def representative(self, testset, cls):
+        df = self.embedding(testset)
+        fig = kmeans_cluster_representative_without_failurelabel(
+            dataframe=df,
+            cla=cls,
+        )
+        strio = BytesIO()
+        fig.savefig(strio, format="png")
+        return strio.getvalue()
 
     def show_underconfident(self):
         """

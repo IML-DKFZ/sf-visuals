@@ -2,7 +2,7 @@ import copy
 import warnings
 from collections import OrderedDict
 
-# import cv2
+import cv2
 import matplotlib
 import numpy as np
 import pandas as pd
@@ -10,6 +10,7 @@ import plotly.graph_objects as go
 from matplotlib import pyplot as plt
 from scipy.spatial import distance
 from scipy.stats import mode
+from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
 from sklearn.manifold import TSNE
 from sklearn.metrics import (accuracy_score, average_precision_score,
@@ -17,6 +18,8 @@ from sklearn.metrics import (accuracy_score, average_precision_score,
 
 warnings.filterwarnings(action="ignore", category=FutureWarning)
 import os
+
+matplotlib.use("agg")
 
 color_map = {
     "TN": "rgb(26,150,65)",
@@ -82,6 +85,9 @@ def getdffromarrays(
     for i in range(n):
         df[f"softmax{i}"] = softmax[:, i]
     df["filepath"] = filepath
+    df.filepath = df.filepath.str.replace(
+        "/dkfz/cluster/gpu/data/OE0612/l049e", "/home/t974t/Data/levin"
+    )
     df["0"] = df[0]
     df["1"] = df[1]
     df["2"] = df[2]
@@ -90,13 +96,16 @@ def getdffromarrays(
 
 
 def kmeans_cluster_representative_without_failurelabel(
-    dataframe, cla: int, class2name: dict, cla_accuracies: dict
-):
+    dataframe, cla: int  # , class2name: dict, cla_accuracies: dict
+) -> plt.Figure:
     from sklearn.cluster import KMeans
 
     k = 9
     n_clusters = k
     df = dataframe
+    df.filepath = df.filepath.str.replace(
+        "/dkfz/cluster/gpu/data/OE0612/l049e", "/home/t974t/Data/levin"
+    )
 
     columns = 3
     rows = 3
@@ -122,13 +131,14 @@ def kmeans_cluster_representative_without_failurelabel(
         fig3.add_subplot(rows, columns, i)
         file = sub_df["filepath"].iloc[ids[0]]
         # for cluster datapath in fp
-        start, end = file.split("l049e/")
-        file = "/home/l049e/Data/" + end
+        print(file)
+        start, end = file.split("levin/")
+        # file = "/home/t974t/Data/levin/" + end
         try:
             im = cv2.imread(file)
             RGB_im = cv2.cvtColor(im, cv2.COLOR_BGR2RGB)
         except:
-            file = "/home/l049e/E130-Personal/Kobelke/" + end
+            file = "/home/t974t/NetworkDrives/E130-Personal/Kobelke/" + end
             im = cv2.imread(file)
             RGB_im = cv2.cvtColor(im, cv2.COLOR_BGR2RGB)
         label = sub_df["label"].iloc[ids[0]]
@@ -143,9 +153,8 @@ def kmeans_cluster_representative_without_failurelabel(
         # plt.title(name)
         plt.imshow(RGB_im)
         plt.axis("off")
-        plt.subplots_adjust(hspace=0)
-        plt.subplots_adjust(wspace=0.0001)
-    fig3.suptitle(f"Class Accuracy: {cla_accuracies[cla]:.2f}", fontsize=70)
+        plt.subplots_adjust(hspace=0, wspace=0, left=0, right=1, top=1, bottom=0)
+    # fig3.suptitle(f"Class Accuracy: {cla_accuracies[cla]:.2f}", fontsize=70)
     return fig3
 
 

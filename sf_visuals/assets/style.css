@@ -82,6 +82,20 @@
   background-color: rgb(255, 255, 255);
 }
 
+.representative-view {
+  /* width: 20%; */
+  grid-area: representative-view;
+  max-width: 100%;
+  margin: 1vw;
+  padding: 0.5vw;
+  background-color: rgb(255, 255, 255);
+  min-height: 90vh;
+
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1vh;
+}
+
 .failure-view {
   /* width: 20%; */
   grid-area: failure-view;
@@ -89,6 +103,11 @@
   margin: 1vw;
   padding: 0.5vw;
   background-color: rgb(255, 255, 255);
+  min-height: 90vh;
+
+  /* display: grid; */
+  /* grid-template-columns: repeat(2, 1fr); */
+  /* gap: 1vh; */
 }
 
 /* Base Styles
@@ -452,8 +471,8 @@ there.
   }
 
   #tab-failures {
-    grid-template-columns: 0fr 3fr;
-    grid-template-areas: "sidebar-fail failure-view";
+    grid-template-columns: 2fr 1fr;
+    grid-template-areas: "representative-view failure-view";
   }
   .tab-container {
     height: 5vh;
