@@ -148,7 +148,7 @@ class Analyser:
         folder2create = os.path.join(cwd, "outputs", dir[0], dir[1])
         check_file = folder2create + "/" + study + "/dataframe.csv"
         if os.path.exists(check_file):
-            df = pd.read_csv(check_file)
+            df = pd.read_csv(check_file, index_col=False)
         else:
             pca50 = PCA(n_components=50)
             pca_encoded50 = pca50.fit_transform(encoded)
@@ -171,9 +171,9 @@ class Analyser:
 
         testfodlers2create = os.path.join(folder2create, str(testset))
         print(testfodlers2create)
-        if not os.path.exists(testfodlers2create):
-            os.makedirs(testfodlers2create)
-        df.to_csv(testfodlers2create + "/dataframe.csv", index=False)
+        if not os.path.exists(check_file):
+            os.makedirs(testfodlers2create, exist_ok=True)
+            df.to_csv(testfodlers2create + "/dataframe.csv", index=False)
 
         return df
 

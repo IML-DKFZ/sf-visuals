@@ -98,8 +98,6 @@ def getdffromarrays(
 def kmeans_cluster_representative_without_failurelabel(
     dataframe, cla: int  # , class2name: dict, cla_accuracies: dict
 ) -> plt.Figure:
-    from sklearn.cluster import KMeans
-
     k = 9
     n_clusters = k
     df = dataframe
@@ -110,7 +108,7 @@ def kmeans_cluster_representative_without_failurelabel(
     columns = 3
     rows = 3
 
-    sub_df = df[(df.label == cla)]
+    sub_df = df[df.label == cla]
 
     data = sub_df[["0", "1", "2"]].to_numpy()
 
