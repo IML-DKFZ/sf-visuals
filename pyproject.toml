@@ -17,7 +17,7 @@ dependencies = [
     "dash>=2.7.0",
     "matplotlib>=3.6.2",
     "numpy>=1.23.5",
-    "opencv-python",
+    "Pillow",
     "pandas>=1.5.2",
     "plotly>=5.11.0",
     "scikit-learn",

@@ -2,19 +2,18 @@ import copy
 import warnings
 from collections import OrderedDict
 
-import cv2
 import matplotlib
 import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
 from matplotlib import pyplot as plt
+from PIL import Image
 from scipy.spatial import distance
 from scipy.stats import mode
 from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
 from sklearn.manifold import TSNE
-from sklearn.metrics import (accuracy_score, average_precision_score,
-                             roc_auc_score)
+from sklearn.metrics import accuracy_score, average_precision_score, roc_auc_score
 
 warnings.filterwarnings(action="ignore", category=FutureWarning)
 import os
@@ -133,12 +132,12 @@ def kmeans_cluster_representative_without_failurelabel(
         start, end = file.split("levin/")
         # file = "/home/t974t/Data/levin/" + end
         try:
-            im = cv2.imread(file)
-            RGB_im = cv2.cvtColor(im, cv2.COLOR_BGR2RGB)
+            im = Image.open(file)
+            im = np.asarray(im)
         except:
             file = "/home/t974t/NetworkDrives/E130-Personal/Kobelke/" + end
-            im = cv2.imread(file)
-            RGB_im = cv2.cvtColor(im, cv2.COLOR_BGR2RGB)
+            im = Image.open(file)
+            im = np.asarray(im)
         label = sub_df["label"].iloc[ids[0]]
         label = int(label)
         predicted = sub_df["predicted"].iloc[ids[0]]
@@ -149,7 +148,7 @@ def kmeans_cluster_representative_without_failurelabel(
         #    name = f"label: {class2name[label]}, pred: {class2name[predicted]}"
 
         # plt.title(name)
-        plt.imshow(RGB_im)
+        plt.imshow(im)
         plt.axis("off")
         plt.subplots_adjust(hspace=0, wspace=0, left=0, right=1, top=1, bottom=0)
     # fig3.suptitle(f"Class Accuracy: {cla_accuracies[cla]:.2f}", fontsize=70)
@@ -167,7 +166,7 @@ def overconfident_images(df, class2name):
     df_sub = df[~(df.label == df.predicted)]
     df_oc_first = df_sub.sort_values(by="confid", ascending=False, ignore_index=True)
 
-    fig = plt.figure(figsize=(16/3, 16))
+    fig = plt.figure(figsize=(16 / 3, 16))
     columns = 1
     rows = 3
     k = columns * rows
@@ -192,13 +191,13 @@ def overconfident_images(df, class2name):
         lab_pred = f"{label=}, {pred=}"
         print(f"OVER {i}: {file}")
         try:
-            im = cv2.imread(file)
-            RGB_im = cv2.cvtColor(im, cv2.COLOR_BGR2RGB)
+            im = Image.open(file)
+            im = np.asarray(im)
         except:
             file = "/home/t974t/NetworkDrives/E130-Personal/Kobelke/" + end
-            im = cv2.imread(file)
-            RGB_im = cv2.cvtColor(im, cv2.COLOR_BGR2RGB)
-        plt.imshow(RGB_im)
+            im = Image.open(file)
+            im = np.asarray(im)
+        plt.imshow(im)
         conf = df_oc_first.confid[i - 1]
         # if lab==1: conf = -1 * conf
         # if lab==-1: conf = 1 - conf
@@ -253,13 +252,13 @@ def underconfident_images(df, class2name):
         lab_pred = f"{label=}, {pred=}"
         print(file)
         try:
-            im = cv2.imread(file)
-            RGB_im = cv2.cvtColor(im, cv2.COLOR_BGR2RGB)
+            im = Image.open(file)
+            im = np.asarray(im)
         except:
-            file = "/home/l049e/E130-Personal/Kobelke/" + end
-            im = cv2.imread(file)
-            RGB_im = cv2.cvtColor(im, cv2.COLOR_BGR2RGB)
-        plt.imshow(RGB_im)
+            file = "/home/t974t/NetworkDrives/E130-Personal/Kobelke/" + end
+            im = Image.open(file)
+            im = np.asarray(im)
+        plt.imshow(im)
         conf = df_oc_first.confid[i - 1]
         # if lab==1: conf = -1 * conf
         # if lab==-1: conf = 1 - conf
