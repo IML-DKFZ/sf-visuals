@@ -167,7 +167,7 @@ def overconfident_images(df, class2name):
     df_sub = df[~(df.label == df.predicted)]
     df_oc_first = df_sub.sort_values(by="confid", ascending=False, ignore_index=True)
 
-    fig = plt.figure(figsize=(16, 16))
+    fig = plt.figure(figsize=(16/3, 16))
     columns = 1
     rows = 3
     k = columns * rows

@@ -287,11 +287,46 @@ def main():
                 html.Div(
                     children=[
                         html.H5(f"Testset: {testset}"),
-                        html.Img(
-                            id="curimg",
-                            width="512px",
-                            height="512px",
-                            src=f"data:image/svg;base64,{data}",
+                        html.Div(
+                            [
+                                html.Img(
+                                    id="curimg",
+                                    className="failure-img",
+                                    # width="512px",
+                                    height="512px",
+                                    src=f"data:image/svg;base64,{data}",
+                                ),
+                                html.Div(
+                                    [
+                                        html.Div(
+                                            [
+                                                html.P(f"Pr: {stats[0]['pred']}"),
+                                                html.P(f"GT: {stats[0]['label']}"),
+                                                html.P(f"C : {stats[0]['conf']}"),
+                                            ],
+                                            className="failure-stat",
+                                        ),
+                                        html.Div(
+                                            [
+                                                html.P(f"Pr: {stats[1]['pred']}"),
+                                                html.P(f"GT: {stats[1]['label']}"),
+                                                html.P(f"C : {stats[1]['conf']}"),
+                                            ],
+                                            className="failure-stat",
+                                        ),
+                                        html.Div(
+                                            [
+                                                html.P(f"Pr: {stats[2]['pred']}"),
+                                                html.P(f"GT: {stats[2]['label']}"),
+                                                html.P(f"C : {stats[2]['conf']}"),
+                                            ],
+                                            className="failure-stat",
+                                        ),
+                                    ],
+                                    className="failure-desc",
+                                ),
+                            ],
+                            className="failure-container",
                         ),
                     ]
                 )
