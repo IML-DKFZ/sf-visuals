@@ -139,11 +139,13 @@ def main():
                             className="tab-custom",
                             children=[
                                 dcc.Loading(
-                                    dcc.Graph(
-                                        id="latentspace",
-                                        className="latentspace",
-                                        responsive=True,
-                                        clear_on_unhover=True,
+                                    html.Div(
+                                        dcc.Graph(
+                                            id="latentspace",
+                                            className="latentspace",
+                                            responsive=True,
+                                            clear_on_unhover=True,
+                                        ),
                                     ),
                                     className="latentspace-loading",
                                 ),

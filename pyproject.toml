@@ -32,7 +32,7 @@ dev = [
     "ipywidgets",
     "isort",
     "pre-commit",
-    "pylint",
+    "ruff",
     "pytest",
 ]
 
@@ -60,3 +60,23 @@ exclude = '''
   )/
 )
 '''
+
+[tool.ruff]
+select = [
+    "B",  # flake8-bugbear
+    "C4", # flake8-comprehensions
+    # "C90", # mccabe
+    "D",   # pydocstyle errors
+    "E",   # pycodestyle
+    "F",   # pyflakes
+    "PL",  # pylint
+    "PT",  # flake8-pytest-style
+    "RUF", # ruff
+    "S",   # flake8-bandit
+    "SIM", # flake8-simplify
+    "W",   # pycodestyle warnings
+]
+
+[tool.ruff.pydocstyle]
+# Use Google-style docstrings.
+convention = "google"
