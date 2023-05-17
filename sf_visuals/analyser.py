@@ -24,12 +24,13 @@ from sf_visuals.utils.utils import (
 
 
 class Analyser:
-    """
-    Build a class holding experimental data to visualy analyse
-        path:  "../experiemnt_group_name/experiment_name"
-        class2plot:   dict({0:"myclassname0",...}) conatianing a mapping of integer classes to real names
-        ls_testsets:   ["nameoftestset",...] a list with names of all testsets
-        class2plot and test_datasets are two lists with a subset of classes/ testset names for which to generate outputs. (output can be quite large)
+    """Build a class holding experimental data to visualy analyse.
+
+    Attributes:
+        accuracies_dict:
+        n_classes:
+        color_map:
+        colors:
     """
 
     def __init__(
@@ -191,7 +192,9 @@ class Analyser:
         self,
         testsets: tuple[str, ...],
         classes2plot: tuple[int] | None = None,
-        coloring: Literal["confidence", "source-target"] = "confidence",
+        coloring: Literal[
+            "confidence", "source-target", "class-confusion"
+        ] = "confidence",
     ):
         df = pd.concat([self.embedding(t) for t in testsets])
 
@@ -246,33 +249,52 @@ class Analyser:
                 (
                     [("correct", correct), ("class", c)],
                     f"{'C' if correct else'Inc'}orrect, C={c}",
-                    lambda data, crl=correct, cl=c: dict(
-                        size=5,
-                        cmin=vmin,
-                        cmax=vmax,
-                        color=data["confid"],
-                        colorscale=colorscales[0 if crl else 1],
-                        symbol=markers[cl % len(markers)],
-                    ),
+                    lambda data, crl=correct, cl=c: {
+                        "size": 5,
+                        "cmin": vmin,
+                        "cmax": vmax,
+                        "color": data["confid"],
+                        "colorscale": colorscales[0 if crl else 1],
+                        "symbol": markers[cl % len(markers)],
+                    },
                 )
                 for correct, c in itertools.product([True, False], classes2plot)
             ]
         elif coloring == "source-target":
+            colors = [["cyan", "blue"], ["gray", "magenta"]]
             traces = [
                 (
                     [("testset", t), ("class", c)],
                     f"C={c}, T={t}",
-                    lambda data, tl=t, cl=c: dict(
-                        size=5,
-                        cmin=vmin,
-                        cmax=vmax,
-                        color=colors[0 if tl == "iid" else 1][
+                    lambda data, tl=t, cl=c: {
+                        "size": 5,
+                        "cmin": vmin,
+                        "cmax": vmax,
+                        "color": colors[0 if tl == "iid" else 1][
                             cl % len(colors[0 if tl == "iid" else 1])
                         ],
-                        symbol=markers[cl % len(markers)],
-                    ),
+                        "symbol": markers[cl % len(markers)],
+                    },
                 )
                 for t, c in itertools.product(df.testset.unique(), classes2plot)
+            ]
+        elif coloring == "class-confusion":
+            colors = [["#00876c", "#89bf77"], ["#d43d51", "#f59b56"]]
+            traces = [
+                (
+                    [("correct", correct), ("class", c)],
+                    f"{'C' if correct else'Inc'}orrect, C={c}",
+                    lambda data, crl=correct, cl=c: {
+                        "size": 5,
+                        "cmin": vmin,
+                        "cmax": vmax,
+                        "color": colors[0 if crl else 1][
+                            cl % len(colors[0 if crl else 1])
+                        ],
+                        "symbol": markers[cl % len(markers)],
+                    },
+                )
+                for correct, c in itertools.product([True, False], classes2plot)
             ]
         else:
             raise ValueError

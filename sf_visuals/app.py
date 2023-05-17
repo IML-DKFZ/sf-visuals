@@ -111,6 +111,7 @@ def main():
                         "label": "Source/Target",
                         "value": "source-target",
                     },
+                    {"label": "Class Confusion", "value": "class-confusion"},
                 ],
                 "confidence",
                 id="checklist-colorby",
@@ -195,7 +196,6 @@ def main():
         for i, v in zip(id, value):
             classes[int(i["id"])] = v
         app_state.analyser.classes = classes
-        return None
 
     @app.callback(
         Output("latentspace", "figure"),
