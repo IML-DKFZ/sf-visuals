@@ -1,3 +1,10 @@
+:root {
+    --color-canvas-bg:#C8C8C8;
+    --color-bg: #FFFFFF;
+    --color-fg: #000000;
+    --color-muted-fg: #586069;
+}
+
 * {
   box-sizing: border-box;
 }
@@ -21,8 +28,8 @@
 }
 
 .tab {
-  color: #586069;
-  background-color: rgb(200, 200, 200) !important;
+  color: var(--color-muted-fg);
+  background-color: var(--color-canvas-bg) !important;
   padding: 12px !important;
   display: flex !important;
   align-items: center;
@@ -30,8 +37,8 @@
   border: none !important;
 }
 .tab--selected {
-  color: black;
-  background-color: rgb(255, 255, 255) !important;
+  color: var(--color-fg);
+  background-color: var(--color-bg) !important;
 }
 
 .tab-custom {
@@ -58,7 +65,7 @@
   max-width: 100%;
   margin: 1vw;
   padding: 0.5vw;
-  background-color: rgb(255, 255, 255);
+  background-color: var(--color-bg);
 }
 
 .hover-preview img {
@@ -76,7 +83,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  background-color: rgb(255, 255, 255);
+  background-color: var(--color-bg);
   width: calc(100% - 2vw);
   height: calc(100vw - 2vw);
 }
@@ -87,7 +94,7 @@
   max-width: 100%;
   margin: 1vw;
   padding: 0.5vw;
-  background-color: rgb(255, 255, 255);
+  background-color: var(--color-bg);
 }
 
 .representative-view {
@@ -96,7 +103,7 @@
   max-width: 100%;
   margin: 1vw;
   padding: 0.5vw;
-  background-color: rgb(255, 255, 255);
+  background-color: var(--color-bg);
   min-height: 90vh;
 
   display: grid;
@@ -110,7 +117,7 @@
   max-width: 100%;
   margin: 1vw;
   padding: 0.5vw;
-  background-color: rgb(255, 255, 255);
+  background-color: var(--color-bg);
   min-height: 90vh;
 
   /* display: grid; */
@@ -143,11 +150,6 @@
   font-family: monospace;
 }
 
-/* Base Styles
-–––––––––––––––––––––––––––––––––––––––––––––––––– */
-/* NOTE
-html is set to 62.5% so that all the REM measurements throughout Skeleton
-are based on 10px sizing. So basically 1.5rem = 15px :) */
 html {
   font-size: 62.5%;
   height: 100%;
@@ -155,7 +157,7 @@ html {
   margin: 0;
 }
 body {
-  font-size: 1.2rem; /* currently ems cause chrome bug misinterpreting rems on body element */
+  font-size: 1.2rem;
   line-height: 1.6;
   font-weight: 400;
   font-family: "Open Sans", "HelveticaNeue", "Helvetica Neue", Helvetica, Arial,
