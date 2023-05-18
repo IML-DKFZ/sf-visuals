@@ -139,6 +139,14 @@ class Analyser:
 
     @cache
     def embedding(self, testset: str):
+        """Compute the embedding for a given testset.
+
+        Args:
+            testset: The testset to compute the embedding for.
+
+        Returns:
+            The embedding for the given testset.
+        """
         logger.info("Computing embedding for {}", testset)
 
         i = self.__ls_testsets.index(testset)
