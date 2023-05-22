@@ -15,6 +15,7 @@ license = { text = "MIT" }
 readme = "README.md"
 dependencies = [
     "dash>=2.7.0",
+    "dash-daq",
     "loguru",
     "matplotlib>=3.6.2",
     "numpy>=1.23.5",

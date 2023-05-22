@@ -6,7 +6,8 @@ import itertools
 from dataclasses import dataclass
 from pathlib import Path
 
-from dash import ALL, Dash, Input, Output, State, dcc, html
+import dash_daq as daq
+from dash import ALL, Dash, Input, Output, Patch, State, dcc, html
 from dash.exceptions import PreventUpdate
 from loguru import logger
 
@@ -29,12 +30,19 @@ def _tab_latent_space():
             children=[
                 dcc.Loading(
                     html.Div(
-                        dcc.Graph(
-                            id="latentspace",
-                            className="latentspace",
-                            responsive=True,
-                            clear_on_unhover=True,
-                        ),
+                        [
+                            dcc.Graph(
+                                id="latentspace",
+                                className="latentspace-inner",
+                                responsive=True,
+                                clear_on_unhover=True,
+                            ),
+                            html.Div(
+                                daq.Slider(id="marker-size", value=5, min=1, max=20),
+                                className="sliders",
+                            ),
+                        ],
+                        className="latentspace",
                     ),
                     className="latentspace-loading",
                 ),
@@ -277,6 +285,7 @@ def main():
         Input("selection-testset", "value"),
         Input("checklist-classes", "value"),
         Input("checklist-colorby", "value"),
+        # Input("marker-size", "value"),
     )
     def update_testset(iid_ood, testset: str, classes, colorby):
         testsets = []
@@ -400,6 +409,21 @@ def main():
             + _sidebar_color_selection(app_state)
         )
         return children
+
+    @app.callback(
+        Output("latentspace", "figure", allow_duplicate=True),
+        State("latentspace", "figure"),
+        Input("marker-size", "value"),
+        prevent_initial_call=True,
+    )
+    def update_marker_size(figure, marker_size):
+        n_traces = len(figure["data"])
+        patch = Patch()
+
+        for i in range(n_traces):
+            patch["data"][i]["marker"]["size"] = marker_size
+
+        return patch
 
     app.run(host="0.0.0.0", debug=True, port="8055")
 
