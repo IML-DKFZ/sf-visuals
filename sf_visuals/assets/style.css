@@ -156,6 +156,18 @@
   font-family: monospace;
 }
 
+.slider-container {
+    width: 100%;
+    display: flex;
+  /* justify-content: center; */
+    align-items: center;
+    padding: 0 2vw;
+}
+
+.slider-container p {
+    margin: 0 1vw;
+}
+
 html {
   font-size: 62.5%;
   height: 100%;

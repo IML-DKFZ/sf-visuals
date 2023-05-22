@@ -38,7 +38,41 @@ def _tab_latent_space():
                                 clear_on_unhover=True,
                             ),
                             html.Div(
-                                daq.Slider(id="marker-size", value=5, min=1, max=20),
+                                [
+                                    html.Div(
+                                        [
+                                            html.P("Marker Size"),
+                                            daq.Slider(
+                                                id="marker-size",
+                                                value=5,
+                                                min=1,
+                                                max=20,
+                                                handleLabel={
+                                                    "showCurrentValue": True,
+                                                    "label": "value",
+                                                },
+                                            ),
+                                        ],
+                                        className="slider-container",
+                                    ),
+                                    html.Div(
+                                        [
+                                            html.P("Marker Alpha"),
+                                            daq.Slider(
+                                                id="marker-alpha",
+                                                value=0.6,
+                                                min=0.1,
+                                                max=1.0,
+                                                step=0.1,
+                                                handleLabel={
+                                                    "showCurrentValue": True,
+                                                    "label": "value",
+                                                },
+                                            ),
+                                        ],
+                                        className="slider-container",
+                                    ),
+                                ],
                                 className="sliders",
                             ),
                         ],
@@ -414,14 +448,16 @@ def main():
         Output("latentspace", "figure", allow_duplicate=True),
         State("latentspace", "figure"),
         Input("marker-size", "value"),
+        Input("marker-alpha", "value"),
         prevent_initial_call=True,
     )
-    def update_marker_size(figure, marker_size):
+    def update_marker_size(figure, marker_size, marker_alpha):
         n_traces = len(figure["data"])
         patch = Patch()
 
         for i in range(n_traces):
             patch["data"][i]["marker"]["size"] = marker_size
+            patch["data"][i]["opacity"] = marker_alpha
 
         return patch
 
