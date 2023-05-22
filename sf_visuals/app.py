@@ -7,7 +7,8 @@ from dataclasses import dataclass
 from pathlib import Path
 
 import dash_daq as daq
-from dash import ALL, Dash, Input, Output, Patch, State, dcc, html
+import plotly.graph_objects as go
+from dash import ALL, MATCH, Dash, Input, Output, Patch, State, ctx, dcc, html
 from dash.exceptions import PreventUpdate
 from loguru import logger
 
@@ -226,49 +227,42 @@ def _sidebar(app_state: AppState):
     )
 
 
-def _failure_triplet(testset: str, data: str, stats: list[dict]):
+def _failure_triplet(testset: str, stats: list[dict]):
+    imgs = []
+    for stat in stats:
+        imgpath = stat["filepath"].replace(
+            "/dkfz/cluster/gpu/data/OE0612/l049e/", "/home/t974t/Data/levin/"
+        )
+        with open(imgpath, "rb") as img:
+            data = base64.b64encode(img.read()).replace(b"\n", b"").decode("utf-8")
+
+        imgs.append(
+            html.Div(
+                [
+                    html.Img(
+                        id={"type": "failure-img", "id": imgpath, "testset": testset},
+                        className="failure-img",
+                        height="128px",
+                        src=f"data:image/png;base64,{data}",
+                        n_clicks=0,
+                    ),
+                    html.Div(
+                        [
+                            html.P(f"Pr: {stat['predicted']}"),
+                            html.P(f"GT: {stat['label']}"),
+                            html.P(f"C : {stat['confid']}"),
+                        ],
+                        className="failure-stat",
+                    ),
+                ],
+                className="failure-img-container",
+            )
+        )
     return html.Div(
         children=[
             html.H5(f"Testset: {testset}"),
             html.Div(
-                [
-                    html.Img(
-                        id="curimg",
-                        className="failure-img",
-                        # width="512px",
-                        height="512px",
-                        src=f"data:image/svg;base64,{data}",
-                    ),
-                    html.Div(
-                        [
-                            html.Div(
-                                [
-                                    html.P(f"Pr: {stats[0]['pred']}"),
-                                    html.P(f"GT: {stats[0]['label']}"),
-                                    html.P(f"C : {stats[0]['conf']}"),
-                                ],
-                                className="failure-stat",
-                            ),
-                            html.Div(
-                                [
-                                    html.P(f"Pr: {stats[1]['pred']}"),
-                                    html.P(f"GT: {stats[1]['label']}"),
-                                    html.P(f"C : {stats[1]['conf']}"),
-                                ],
-                                className="failure-stat",
-                            ),
-                            html.Div(
-                                [
-                                    html.P(f"Pr: {stats[2]['pred']}"),
-                                    html.P(f"GT: {stats[2]['label']}"),
-                                    html.P(f"C : {stats[2]['conf']}"),
-                                ],
-                                className="failure-stat",
-                            ),
-                        ],
-                        className="failure-desc",
-                    ),
-                ],
+                imgs,
                 className="failure-container",
             ),
         ]
@@ -319,7 +313,6 @@ def main():
         Input("selection-testset", "value"),
         Input("checklist-classes", "value"),
         Input("checklist-colorby", "value"),
-        # Input("marker-size", "value"),
     )
     def update_testset(iid_ood, testset: str, classes, colorby):
         testsets = []
@@ -399,9 +392,8 @@ def main():
 
         imgs = []
         for testset in testsets:
-            svg, stats = app_state.analyser.overconfident(testset)
-            data = base64.b64encode(svg).replace(b"\n", b"").decode("utf-8")
-            imgs.append(_failure_triplet(testset, data, stats))
+            stats = app_state.analyser.overconfident(testset)
+            imgs.append(_failure_triplet(testset, stats))
 
         return imgs
 
@@ -420,14 +412,21 @@ def main():
         imgpath = imgpath.replace(
             "/dkfz/cluster/gpu/data/OE0612/l049e/", "/home/t974t/Data/levin/"
         )
+
+        label = hoverData["points"][0]["customdata"].split(",")[0]
+        predicted = hoverData["points"][0]["customdata"].split(",")[1]
+
         with open(imgpath, "rb") as img:
             data = base64.b64encode(img.read()).replace(b"\n", b"").decode("utf-8")
-            return html.Img(
-                id="curimg",
-                width="512px",
-                height="512px",
-                src=f"data:image/jpeg;base64,{data}",
-            )
+            return [
+                html.Img(
+                    id="curimg",
+                    width="512px",
+                    height="512px",
+                    src=f"data:image/jpeg;base64,{data}",
+                ),
+                html.H5(f"Label: {label}, Predicted: {predicted}, Path: {imgpath}"),
+            ]
 
     @app.callback(
         Output("sidebar", "children"),
@@ -460,6 +459,59 @@ def main():
             patch["data"][i]["opacity"] = marker_alpha
 
         return patch
+
+    @app.callback(
+        Output({"type": "failure-img", "id": ALL, "testset": ALL}, "style"),
+        Input({"type": "failure-img", "id": ALL, "testset": ALL}, "n_clicks"),
+    )
+    def on_click_failure(n_clicks):
+        if ctx.triggered_id is None:
+            return [{"border": "5px solid var(--color-bg)"} for _ in ctx.outputs_list]
+
+        output = []
+        for o in ctx.outputs_list:
+            if o["id"]["id"] == ctx.triggered_id["id"]:
+                output.append({"border": "5px solid red"})
+            else:
+                output.append({"border": "5px solid var(--color-bg)"})
+        return output
+
+    @app.callback(
+        Output("latentspace", "figure", allow_duplicate=True),
+        State("latentspace", "figure"),
+        Input({"type": "failure-img", "id": ALL, "testset": ALL}, "n_clicks"),
+        prevent_initial_call=True,
+    )
+    def on_click_failure2(figure, n_clicks):
+        if ctx.triggered_id is None:
+            raise PreventUpdate
+
+        if figure is None:
+            raise PreventUpdate
+
+        stats = app_state.analyser.get_coords_from_filename(
+            ctx.triggered_id["id"], ctx.triggered_id["testset"]
+        )
+        print(f"{stats=}")
+        print(f"{len(figure['data'])=}")
+        patched_figure = Patch()
+        for i in range(len(figure["data"])):
+            if figure["data"][i]["name"] == "failure":
+                del patched_figure["data"][i]
+
+        patched_figure["data"].append(
+            go.Scatter3d(
+                x=[stats["0"]],
+                y=[stats["1"]],
+                z=[stats["2"]],
+                opacity=0.4,
+                mode="markers",
+                name="failure",
+                hoverinfo="name",
+                marker={"size": 10, "color": "black", "symbol": "x"},
+            )
+        )
+        return patched_figure
 
     app.run(host="0.0.0.0", debug=True, port="8055")
 

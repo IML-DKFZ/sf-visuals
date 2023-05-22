@@ -1,8 +1,8 @@
 :root {
-    --color-canvas-bg:#C8C8C8;
-    --color-bg: #FFFFFF;
-    --color-fg: #000000;
-    --color-muted-fg: #586069;
+  --color-canvas-bg: #c8c8c8;
+  --color-bg: #ffffff;
+  --color-fg: #000000;
+  --color-muted-fg: #586069;
 }
 
 * {
@@ -118,28 +118,28 @@
 }
 
 .failure-view {
-  /* width: 20%; */
   grid-area: failure-view;
   max-width: 100%;
   margin: 1vw;
   padding: 0.5vw;
   background-color: var(--color-bg);
   min-height: 90vh;
-
-  /* display: grid; */
-  /* grid-template-columns: repeat(2, 1fr); */
-  /* gap: 1vh; */
 }
 
-.failure-container {
+.failure-img-container {
   display: grid;
   grid-template-columns: 1fr 2fr;
+  grid-template-areas: "failure-img failure-stat";
+}
+.failure-img {
+  grid-area: failure-img;
 }
 .failure-desc {
   display: grid;
   grid-template-rows: repeat(3, 1fr);
 }
 .failure-stat {
+  grid-area: failure-stat;
   height: 100%;
   width: 100%;
   padding: 10% 0;
@@ -157,15 +157,15 @@
 }
 
 .slider-container {
-    width: 100%;
-    display: flex;
+  width: 100%;
+  display: flex;
   /* justify-content: center; */
-    align-items: center;
-    padding: 0 2vw;
+  align-items: center;
+  padding: 0 2vw;
 }
 
 .slider-container p {
-    margin: 0 1vw;
+  margin: 0 1vw;
 }
 
 html {
@@ -535,9 +535,9 @@ there.
     height: 89vh;
     padding: 0;
   }
-    .sliders {
-        height: 4vh;
-    }
+  .sliders {
+    height: 4vh;
+  }
   .latentspace {
     height: 94vh;
     margin: 1vw;

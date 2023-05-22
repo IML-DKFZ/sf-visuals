@@ -321,6 +321,9 @@ class Analyser:
                     opacity=0.4,
                     mode="markers",
                     name=label,
+                    customdata=data.label.astype(str).str.cat(
+                        data.predicted.astype(str), sep=","
+                    ),
                     text=data["filepath"],
                     hoverinfo="name",
                     marker=markers_fn(data),
@@ -351,11 +354,18 @@ class Analyser:
         return matplotlib plot with overconfident images
         """
         df = self.embedding(testset)
-        fig, stats = overconfident_images(df=df, class2name=self.__class2name)
-        strio = BytesIO()
-        fig.savefig(strio, format="png")
-        plt.close(fig)
-        return strio.getvalue(), stats
+        df["confid"] = (df.filter(like="softmax").max(axis=1) > 0.8).astype(float)
+        df = df[df.label != df.predicted]
+        df = df.sort_values("confid", ascending=False, ignore_index=True)
+        return (
+            df[["filepath", "confid", "predicted", "label"]]
+            .iloc[:3, :]
+            .to_dict("records")
+        )
+
+    def get_coords_from_filename(self, filename: str, testset: str):
+        df = self.embedding(testset)
+        return df[df.filepath == filename].to_dict("records")[0]
 
     def show_underconfident(self):
         """
