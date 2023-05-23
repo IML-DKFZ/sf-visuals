@@ -228,7 +228,6 @@ def _failure_triplet(testset: str, stats: list[dict]):
             html.Div(
                 [
                     html.Img(
-                        id={"type": "failure-img", "id": imgpath, "testset": testset},
                         className="failure-img",
                         height="128px",
                         src=f"data:image/png;base64,{data}",
@@ -244,6 +243,7 @@ def _failure_triplet(testset: str, stats: list[dict]):
                         className="failure-stat",
                     ),
                 ],
+                id={"type": "failure-img", "id": imgpath, "testset": testset},
                 className="failure-img-container",
             )
         )
@@ -332,19 +332,34 @@ def main():
 
         imgs = []
         for testset, cls in itertools.product(testsets, classes):
-            svg = app_state.analyser.representative(testset, cls)
-            data = base64.b64encode(svg).replace(b"\n", b"").decode("utf-8")
+            cluster = []
+            stats = app_state.analyser.representative(testset, cls)
+            for stat in stats:
+                with open(stat["filepath"], "rb") as img:
+                    data = (
+                        base64.b64encode(img.read()).replace(b"\n", b"").decode("utf-8")
+                    )
+                    cluster.append(
+                        html.Div(
+                            [
+                                html.Img(
+                                    id="curimg",
+                                    width="128px",
+                                    height="128px",
+                                    src=f"data:image/svg;base64,{data}",
+                                ),
+                                html.P(f"{stat['filepath']}", className="file-path"),
+                            ]
+                        )
+                    )
             imgs.append(
                 html.Div(
                     children=[
                         html.H5(f"Testset: {testset}, Class: {cls}"),
-                        html.Img(
-                            id="curimg",
-                            width="512px",
-                            height="512px",
-                            src=f"data:image/svg;base64,{data}",
-                        ),
-                    ]
+                        html.Div(cluster, className="cluster-container"),
+                    ],
+                    id={"type": "cluster-container", "class": cls, "testset": testset},
+                    className="cluster-container-container",
                 )
             )
 
@@ -442,19 +457,19 @@ def main():
         return patch
 
     @app.callback(
-        Output({"type": "failure-img", "id": ALL, "testset": ALL}, "style"),
+        Output({"type": "failure-img", "id": ALL, "testset": ALL}, "className"),
         Input({"type": "failure-img", "id": ALL, "testset": ALL}, "n_clicks"),
     )
     def on_click_failure_highlight(n_clicks):
         if ctx.triggered_id is None:
-            return [{"border": "5px solid var(--color-bg)"} for _ in ctx.outputs_list]
+            return ["failure-img-container" for _ in ctx.outputs_list]
 
         output = []
         for o in ctx.outputs_list:
             if o["id"]["id"] == ctx.triggered_id["id"]:
-                output.append({"border": "5px solid red"})
+                output.append("failure-img-container-active")
             else:
-                output.append({"border": "5px solid var(--color-bg)"})
+                output.append("failure-img-container")
         return output
 
     @app.callback(
@@ -490,6 +505,63 @@ def main():
                 name="failure",
                 hoverinfo="name",
                 marker={"size": 10, "color": "black", "symbol": "x"},
+            )
+        )
+        return patched_figure
+
+    @app.callback(
+        Output(
+            {"type": "cluster-container", "class": ALL, "testset": ALL}, "className"
+        ),
+        Input({"type": "cluster-container", "class": ALL, "testset": ALL}, "n_clicks"),
+    )
+    def on_click_cluster_highlight(n_clicks):
+        if ctx.triggered_id is None:
+            return ["cluster-container-container" for _ in ctx.outputs_list]
+
+        output = []
+        for o in ctx.outputs_list:
+            if (
+                o["id"]["class"] == ctx.triggered_id["class"]
+                and o["id"]["testset"] == ctx.triggered_id["testset"]
+            ):
+                output.append("cluster-container-container-active")
+            else:
+                output.append("cluster-container-container")
+        return output
+
+    @app.callback(
+        Output("latentspace", "figure", allow_duplicate=True),
+        State("latentspace", "figure"),
+        Input({"type": "cluster-container", "class": ALL, "testset": ALL}, "n_clicks"),
+        prevent_initial_call=True,
+    )
+    def on_click_cluster_latentspace(figure, n_clicks):
+        if ctx.triggered_id is None:
+            raise PreventUpdate
+
+        if figure is None:
+            raise PreventUpdate
+
+        stats = app_state.analyser.representative(
+            ctx.triggered_id["testset"], ctx.triggered_id["class"]
+        )
+        print(f"{stats=}")
+        patched_figure = Patch()
+        for i in range(len(figure["data"])):
+            if figure["data"][i]["name"] == "cluster":
+                del patched_figure["data"][i]
+
+        patched_figure["data"].append(
+            go.Scatter3d(
+                x=[stat["0"] for stat in stats],
+                y=[stat["1"] for stat in stats],
+                z=[stat["2"] for stat in stats],
+                opacity=0.4,
+                mode="markers",
+                name="cluster",
+                hoverinfo="name",
+                marker={"size": 10, "color": "black", "symbol": "cross"},
             )
         )
         return patched_figure

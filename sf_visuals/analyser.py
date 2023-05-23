@@ -339,14 +339,13 @@ class Analyser:
     @cache
     def representative(self, testset: str, cls: int):
         df = self.embedding(testset)
-        fig = kmeans_cluster_representative_without_failurelabel(
+        data = kmeans_cluster_representative_without_failurelabel(
             dataframe=df,
             cla=cls,
         )
-        strio = BytesIO()
-        fig.savefig(strio, format="png")
-        plt.close(fig)
-        return strio.getvalue()
+        return data[["filepath", "predicted", "label", "0", "1", "2"]].to_dict(
+            "records"
+        )
 
     @cache
     def overconfident(self, testset: str):

@@ -105,55 +105,26 @@ def kmeans_cluster_representative_without_failurelabel(
         "/dkfz/cluster/gpu/data/OE0612/l049e", "/home/t974t/Data/levin"
     )
 
-    columns = 3
-    rows = 3
-
     sub_df = df[df.label == cla]
 
     data = sub_df[["0", "1", "2"]].to_numpy()
 
     kmeans = KMeans(n_clusters=n_clusters, random_state=0).fit(data)
 
-    prediction = kmeans.predict(data)
+    kmeans.predict(data)
     centers = kmeans.cluster_centers_
 
-    fig3 = plt.figure(figsize=(16, 16))
-
+    idx = []
     for j in range(n_clusters):
         try:
             center = centers[j, :]
         except:
             center = centers[0, :]
         ids = closest_node(center, data, k=1)
-        i = j + 1
-        fig3.add_subplot(rows, columns, i)
-        file = sub_df["filepath"].iloc[ids[0]]
-        # for cluster datapath in fp
-        logger.info("Reading representative image {}", file)
-        start, end = file.split("levin/")
-        # file = "/home/t974t/Data/levin/" + end
-        try:
-            im = Image.open(file)
-            im = np.asarray(im)
-        except:
-            file = "/home/t974t/NetworkDrives/E130-Personal/Kobelke/" + end
-            im = Image.open(file)
-            im = np.asarray(im)
-        label = sub_df["label"].iloc[ids[0]]
-        label = int(label)
-        predicted = sub_df["predicted"].iloc[ids[0]]
-        # try:
-        #    subclass = sub_df["dx"].iloc[ids[0]]
-        #    name = f"label: {class2name[label]}, pred: {class2name[predicted]}, subclass: {subclass}"
-        # except:
-        #    name = f"label: {class2name[label]}, pred: {class2name[predicted]}"
+        idx.append(ids[0])
+        # logger.info("Reading representative image {}", file)
 
-        # plt.title(name)
-        plt.imshow(im)
-        plt.axis("off")
-        plt.subplots_adjust(hspace=0, wspace=0, left=0, right=1, top=1, bottom=0)
-    # fig3.suptitle(f"Class Accuracy: {cla_accuracies[cla]:.2f}", fontsize=70)
-    return fig3
+    return sub_df.iloc[idx]
 
 
 def overconfident_images(df, class2name):

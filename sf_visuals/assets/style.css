@@ -3,7 +3,7 @@
   --color-fg: #242f45;
   --color-accent: #4c5c96;
   --color-accent-dark: #78809d;
-  --color-accent-light: #809FCD;
+  --color-accent-light: #809fcd;
 }
 
 * {
@@ -43,6 +43,7 @@
   color: var(--color-bg) !important;
   background-color: var(--color-accent) !important;
   margin: 5px !important;
+  box-shadow: inset 0px 0px 8px rgba(55, 55, 55, 0.8);
 }
 
 .tab-custom {
@@ -125,10 +126,16 @@
   min-height: 90vh;
 }
 
-.failure-img-container {
+.failure-img-container,
+.failure-img-container-active {
   display: grid;
   grid-template-columns: 1fr 2fr;
   grid-template-areas: "failure-img failure-stat";
+}
+.failure-img-container-active {
+  background-color: var(--color-accent);
+  color: var(--color-bg);
+  box-shadow: inset 0px 0px 5px rgba(55, 55, 55, 0.8);
 }
 .failure-img {
   grid-area: failure-img;
@@ -155,31 +162,67 @@
   margin: 0;
 }
 
+.cluster-container {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0;
+  aspect-ratio: 1/1;
+  width: 100%;
+  padding: 5%;
+}
+
+.cluster-container div {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.cluster-container div p {
+  width: 128px;
+}
+
+.cluster-container-container,
+.cluster-container-container-active {
+  border-radius: 5px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+}
+.cluster-container-container-active {
+  background-color: var(--color-accent);
+  color: var(--color-bg);
+  box-shadow: inset 0px 0px 5px rgba(55, 55, 55, 0.8);
+}
+
 .slider {
   width: 80%;
 }
 
 .rc-slider-rail {
-    background-color: var(--color-accent-dark);
+  background-color: var(--color-accent-dark);
 }
 .rc-slider-dot {
-    border-color: var(--color-accent-dark);
-    background-color: var(--color-bg);
+  border-color: var(--color-accent-dark);
+  background-color: var(--color-bg);
 }
 
 .rc-slider-track {
-    background-color: var(--color-accent-light);
+  background-color: var(--color-accent-light);
 }
-.rc-slider-dot-active, .rc-slider-handle {
-    border-color: var(--color-accent-light) !important;
-    background-color: var(--color-bg);
+.rc-slider-dot-active,
+.rc-slider-handle {
+  border-color: var(--color-accent-light) !important;
+  background-color: var(--color-bg);
 }
 
 .rc-slider-mark-text {
-    color: var(--color-accent-dark);
+  color: var(--color-accent-dark);
 }
 .rc-slider-mark-text-active {
-    color: var(--color-fg) !important;
+  color: var(--color-fg) !important;
 }
 
 .slider-container {
