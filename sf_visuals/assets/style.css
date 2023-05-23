@@ -1,8 +1,9 @@
 :root {
-  --color-canvas-bg: #c8c8c8;
-  --color-bg: #ffffff;
-  --color-fg: #000000;
-  --color-muted-fg: #586069;
+  --color-bg: #e1e8e9;
+  --color-fg: #242f45;
+  --color-accent: #4c5c96;
+  --color-accent-dark: #78809d;
+  --color-accent-light: #809FCD;
 }
 
 * {
@@ -28,17 +29,20 @@
 }
 
 .tab {
-  color: var(--color-muted-fg);
-  background-color: var(--color-canvas-bg) !important;
+  color: var(--color-bg) !important;
+  background-color: var(--color-accent-dark) !important;
   padding: 12px !important;
   display: flex !important;
   align-items: center;
   justify-content: center;
   border: none !important;
+  border-radius: 25px !important;
+  margin: 5px !important;
 }
 .tab--selected {
-  color: var(--color-fg);
-  background-color: var(--color-bg) !important;
+  color: var(--color-bg) !important;
+  background-color: var(--color-accent) !important;
+  margin: 5px !important;
 }
 
 .tab-custom {
@@ -79,11 +83,6 @@
   height: 100vw; /* square plot in single column layout: height == width */
   padding: 1vw;
   background-color: var(--color-bg);
-}
-.latentspace-inner {
-  max-width: 100%;
-  /* height: 100vw; /* square plot in single column layout: height == width */
-  padding: 1vw;
 }
 .latentspace-loading {
   display: flex;
@@ -142,30 +141,62 @@
   grid-area: failure-stat;
   height: 100%;
   width: 100%;
-  padding: 10% 0;
+  padding: 2% 0;
 }
 .failure-stat p {
-  height: 33.3%;
-  line-height: 33.3%;
+  height: 24%;
+  line-height: 2rem;
   width: 100%;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  margin: 0;
   font-size: 2rem;
   font-family: monospace;
+  margin: 0;
+}
+
+.slider {
+  width: 80%;
+}
+
+.rc-slider-rail {
+    background-color: var(--color-accent-dark);
+}
+.rc-slider-dot {
+    border-color: var(--color-accent-dark);
+    background-color: var(--color-bg);
+}
+
+.rc-slider-track {
+    background-color: var(--color-accent-light);
+}
+.rc-slider-dot-active, .rc-slider-handle {
+    border-color: var(--color-accent-light) !important;
+    background-color: var(--color-bg);
+}
+
+.rc-slider-mark-text {
+    color: var(--color-accent-dark);
+}
+.rc-slider-mark-text-active {
+    color: var(--color-fg) !important;
 }
 
 .slider-container {
   width: 100%;
   display: flex;
-  /* justify-content: center; */
   align-items: center;
-  padding: 0 2vw;
+  padding: 0.2vh 0;
 }
 
 .slider-container p {
-  margin: 0 1vw;
+  width: 20%;
+  padding: 0 5px;
+}
+
+.file-path {
+  line-height: 1rem !important;
+  font-size: 1rem !important;
 }
 
 html {
@@ -180,8 +211,8 @@ body {
   font-weight: 400;
   font-family: "Open Sans", "HelveticaNeue", "Helvetica Neue", Helvetica, Arial,
     sans-serif;
-  color: rgb(50, 50, 50);
-  background-color: rgb(200, 200, 200);
+  color: var(--color-fg);
+  background-color: var(--color-bg);
   height: 100%;
   padding: 0;
   margin: 0;
@@ -516,7 +547,7 @@ there.
 */
 @media (min-width: 1300px) {
   .tab-custom {
-    height: 94vh;
+    height: 93vh;
   }
   #tab-latentspace {
     grid-template-columns: 2fr 1fr;
@@ -531,21 +562,10 @@ there.
     height: 5vh;
     grid-area: "navbar";
   }
-  .latentspace-inner {
-    height: 89vh;
-    padding: 0;
-  }
-  .sliders {
-    height: 4vh;
-  }
   .latentspace {
-    height: 94vh;
-    margin: 1vw;
-    padding: 0;
+    height: 93vh;
   }
   .latentspace-loading {
-    height: calc(94vh - 2vw);
-    margin: 1vw;
-    padding: 0;
+    height: calc(93vh - 2vw);
   }
 }

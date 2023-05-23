@@ -6,7 +6,6 @@ import itertools
 from dataclasses import dataclass
 from pathlib import Path
 
-import dash_daq as daq
 import plotly.graph_objects as go
 from dash import ALL, MATCH, Dash, Input, Output, Patch, State, ctx, dcc, html
 from dash.exceptions import PreventUpdate
@@ -34,50 +33,11 @@ def _tab_latent_space():
                         [
                             dcc.Graph(
                                 id="latentspace",
-                                className="latentspace-inner",
+                                className="latentspace",
                                 responsive=True,
                                 clear_on_unhover=True,
                             ),
-                            html.Div(
-                                [
-                                    html.Div(
-                                        [
-                                            html.P("Marker Size"),
-                                            daq.Slider(
-                                                id="marker-size",
-                                                value=5,
-                                                min=1,
-                                                max=20,
-                                                handleLabel={
-                                                    "showCurrentValue": True,
-                                                    "label": "value",
-                                                },
-                                            ),
-                                        ],
-                                        className="slider-container",
-                                    ),
-                                    html.Div(
-                                        [
-                                            html.P("Marker Alpha"),
-                                            daq.Slider(
-                                                id="marker-alpha",
-                                                value=0.6,
-                                                min=0.1,
-                                                max=1.0,
-                                                step=0.1,
-                                                handleLabel={
-                                                    "showCurrentValue": True,
-                                                    "label": "value",
-                                                },
-                                            ),
-                                        ],
-                                        className="slider-container",
-                                    ),
-                                ],
-                                className="sliders",
-                            ),
                         ],
-                        className="latentspace",
                     ),
                     className="latentspace-loading",
                 ),
@@ -108,11 +68,9 @@ def _tab_failures():
                         className="representative-view",
                     ),
                 ),
-                dcc.Loading(
-                    html.Div(
-                        id="failure-view",
-                        className="failure-view",
-                    ),
+                html.Div(
+                    id="failure-view",
+                    className="failure-view",
                 ),
             ],
         ),
@@ -214,6 +172,43 @@ def _sidebar_color_selection(app_state: AppState):
     ]
 
 
+def _sidebar_sliders(app_state: AppState):
+    return [
+        html.H3("Marker Settings:"),
+        html.Div(
+            [
+                html.P("Marker Size"),
+                dcc.Slider(
+                    id="marker-size",
+                    value=5,
+                    min=0,
+                    max=20,
+                    step=1,
+                    marks={i: str(i) for i in range(0, 21, 5)},
+                    className="slider",
+                ),
+            ],
+            className="slider-container",
+        ),
+        html.Div(
+            [
+                html.P("Marker Alpha"),
+                dcc.Slider(
+                    id="marker-alpha",
+                    value=0.6,
+                    min=0,
+                    max=1.0,
+                    step=0.1,
+                    marks={i / 10: str(i / 10) for i in range(2, 10, 2)}
+                    | {0: "0", 1: "1"},
+                    className="slider",
+                ),
+            ],
+            className="slider-container",
+        ),
+    ]
+
+
 def _sidebar(app_state: AppState):
     return html.Div(
         id="sidebar",
@@ -223,6 +218,7 @@ def _sidebar(app_state: AppState):
             + _sidebar_class_selection(app_state)
             + _sidebar_dataset_selection(app_state)
             + _sidebar_color_selection(app_state)
+            + _sidebar_sliders(app_state)
         ),
     )
 
@@ -251,6 +247,7 @@ def _failure_triplet(testset: str, stats: list[dict]):
                             html.P(f"Pr: {stat['predicted']}"),
                             html.P(f"GT: {stat['label']}"),
                             html.P(f"C : {stat['confid']}"),
+                            html.P(f"{stat['filepath']}", className="file-path"),
                         ],
                         className="failure-stat",
                     ),
@@ -425,12 +422,14 @@ def main():
                     height="512px",
                     src=f"data:image/jpeg;base64,{data}",
                 ),
-                html.H5(f"Label: {label}, Predicted: {predicted}, Path: {imgpath}"),
+                html.H5(f"Label: {label}, Predicted: {predicted}"),
+                html.P(f"{imgpath}", className="file-path"),
             ]
 
     @app.callback(
         Output("sidebar", "children"),
         Input("base-path-dd", "value"),
+        prevent_initial_call=True,
     )
     def update_path(value):
         app_state.path = app_state.base_path / value
@@ -440,6 +439,7 @@ def main():
             + _sidebar_class_selection(app_state)
             + _sidebar_dataset_selection(app_state)
             + _sidebar_color_selection(app_state)
+            + _sidebar_sliders(app_state)
         )
         return children
 
