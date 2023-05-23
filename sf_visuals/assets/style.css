@@ -26,6 +26,11 @@
 
 .tab-container {
   grid-area: "navbar";
+  border: none !important;
+  border-radius: 20px !important;
+  overflow: hidden;
+  margin: 5px !important;
+  padding: 0 !important;
 }
 
 .tab {
@@ -36,13 +41,14 @@
   align-items: center;
   justify-content: center;
   border: none !important;
-  border-radius: 25px !important;
-  margin: 5px !important;
+  margin: 0 !important;
+  padding: 0 !important;
 }
 .tab--selected {
   color: var(--color-bg) !important;
   background-color: var(--color-accent) !important;
-  margin: 5px !important;
+  margin: 0 !important;
+  padding: 0 !important;
   box-shadow: inset 0px 0px 8px rgba(55, 55, 55, 0.8);
 }
 
@@ -602,7 +608,7 @@ there.
     grid-template-areas: "representative-view failure-view";
   }
   .tab-container {
-    height: 5vh;
+    height: calc(5vh - 10px);
     grid-area: "navbar";
   }
   .latentspace {
