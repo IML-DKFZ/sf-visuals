@@ -105,15 +105,7 @@ def _sidebar_class_selection(app_state: AppState):
                 {
                     "label": html.Div(
                         [
-                            f"Class {c}: ",
-                            dcc.Input(
-                                id={
-                                    "type": "class-name",
-                                    "id": f"{c}",
-                                },
-                                type="text",
-                                value=f"{c}",
-                            ),
+                            f"Class {c}",
                         ],
                         style={"display": "inline-block"},
                     ),
@@ -294,24 +286,13 @@ def main():
     )
 
     @app.callback(
-        Output("dummy", "children"),
-        Input({"type": "class-name", "id": ALL}, "value"),
-        State({"type": "class-name", "id": ALL}, "id"),
-    )
-    def update_class_name(value, id):
-        classes = {}
-        for i, v in zip(id, value):
-            classes[int(i["id"])] = v
-        app_state.analyser.classes = classes
-
-    @app.callback(
         Output("latentspace", "figure"),
         Input("checklist-testsets", "value"),
         Input("selection-testset", "value"),
         Input("checklist-classes", "value"),
         Input("checklist-colorby", "value"),
     )
-    def update_testset(iid_ood, testset: str, classes, colorby):
+    def update_testset_latent_space(iid_ood, testset: str, classes, colorby):
         testsets = []
         if "iid" in iid_ood:
             testsets.append("iid")
@@ -338,7 +319,7 @@ def main():
         Input("selection-testset", "value"),
         Input("checklist-testsets", "value"),
     )
-    def update_testset2(base_path, classes, testset, iid_ood):
+    def update_testset_representative(base_path, classes, testset, iid_ood):
         testsets = []
         if "iid" in iid_ood:
             testsets.append("iid")
@@ -376,7 +357,7 @@ def main():
         Input("selection-testset", "value"),
         Input("checklist-testsets", "value"),
     )
-    def update_testset3(base_path, classes, testset, iid_ood):
+    def update_testset_failures(base_path, classes, testset, iid_ood):
         testsets = []
         if "iid" in iid_ood:
             testsets.append("iid")
@@ -464,7 +445,7 @@ def main():
         Output({"type": "failure-img", "id": ALL, "testset": ALL}, "style"),
         Input({"type": "failure-img", "id": ALL, "testset": ALL}, "n_clicks"),
     )
-    def on_click_failure(n_clicks):
+    def on_click_failure_highlight(n_clicks):
         if ctx.triggered_id is None:
             return [{"border": "5px solid var(--color-bg)"} for _ in ctx.outputs_list]
 
@@ -482,7 +463,7 @@ def main():
         Input({"type": "failure-img", "id": ALL, "testset": ALL}, "n_clicks"),
         prevent_initial_call=True,
     )
-    def on_click_failure2(figure, n_clicks):
+    def on_click_failure_latentspace(figure, n_clicks):
         if ctx.triggered_id is None:
             raise PreventUpdate
 
