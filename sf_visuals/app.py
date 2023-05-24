@@ -543,10 +543,12 @@ def main():
         if figure is None:
             raise PreventUpdate
 
+        if not any(n_clicks):
+            raise PreventUpdate
+
         stats = app_state.analyser.representative(
             ctx.triggered_id["testset"], ctx.triggered_id["class"]
         )
-        print(f"{stats=}")
         patched_figure = Patch()
         for i in range(len(figure["data"])):
             if figure["data"][i]["name"] == "cluster":
