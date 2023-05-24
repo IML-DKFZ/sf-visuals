@@ -52,9 +52,7 @@ def getdffromarrays(
     for i in range(n):
         df[f"softmax{i}"] = softmax[:, i]
     df["filepath"] = filepath
-    df.filepath = df.filepath.str.replace(
-        "/dkfz/cluster/gpu/data/OE0612/l049e", "/home/t974t/Data/levin"
-    )
+    df.filepath = df.filepath.str.replace("/dkfz/cluster/gpu/data/OE0612/l049e", "")
     df["0"] = df[0]
     df["1"] = df[1]
     df["2"] = df[2]
@@ -68,9 +66,7 @@ def kmeans_cluster_representative_without_failurelabel(
     k = 9
     n_clusters = k
     df = dataframe
-    df.filepath = df.filepath.str.replace(
-        "/dkfz/cluster/gpu/data/OE0612/l049e", "/home/t974t/Data/levin"
-    )
+    df.filepath = df.filepath.str.replace("/dkfz/cluster/gpu/data/OE0612/l049e", "")
 
     sub_df = df[df.label == cla]
 

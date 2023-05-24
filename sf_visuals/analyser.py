@@ -33,12 +33,14 @@ class Analyser:
     def __init__(
         self,
         path: Path | str,
+        base_path: Path | str,
     ) -> None:
         if isinstance(path, str):
             path = Path(path)
 
         self.__path = path / "test_results"
         logger.info("Loading Data for {}", path)
+        self.__base_path = base_path
         self.__raw_output = np.load(self.__path / "raw_output.npz")["arr_0"]
         self.__softmax_output = self.__raw_output[:, :-2]
         self.__out_class = np.argmax(np.squeeze(self.__softmax_output), axis=1)
@@ -81,7 +83,7 @@ class Analyser:
                 attributions = pd.read_csv(self.__path / "attributions.csv")
 
             attributions.filepath = attributions.filepath.str.replace(
-                "/dkfz/cluster/gpu/data/OE0612/l049e", "/home/t974t/Data/levin"
+                "/dkfz/cluster/gpu/data/OE0612/l049e/", ""
             )
             self.__csvs.append(attributions)
         self.__softmax_beginning = np.squeeze(self.__softmax_output)
@@ -142,21 +144,20 @@ class Analyser:
         logger.info("Computing embedding for {}", testset)
 
         i = self.__ls_testsets.index(testset)
-        study = str(self.__ls_testsets[i])
         boolarray = self.__encoded_output[:, -1] == i
-        len_testset = np.sum(boolarray)
         predicted = self.__out_class[boolarray]
-        baseline_class = mode(self.__labels)[0][0]
         encoded = self.__encoded_output[boolarray][:, :-1]
         softmax = self.__softmax_beginning[boolarray]
-        y_score = self.__softmax_beginning[boolarray, 1]
         y_true = self.__labels[boolarray]
-        subfolders = str(self.__path).split("/")
-        cwd = os.getcwd()
-        dir = subfolders[-4:-2]
-        folder2create = os.path.join(cwd, "outputs", dir[0], dir[1])
-        check_file = folder2create + "/" + study + "/dataframe.csv"
-        if os.path.exists(check_file):
+
+        folder2create = (
+            Path.cwd() / "outputs" / self.__path.relative_to(self.__base_path).parent
+        )
+        logger.warning(f"{folder2create=}")
+        check_file = folder2create / testset / "dataframe.csv"
+        logger.warning(f"{check_file=}")
+
+        if check_file.is_file():
             logger.info("Found cached embedding {}", check_file)
             df = pd.read_csv(check_file, index_col=False)
         else:
@@ -165,10 +166,8 @@ class Analyser:
             tsne_encoded3_set = TSNE(
                 n_components=3, init="pca", learning_rate=200
             ).fit_transform(pca_encoded50)
-            ### create dataframe for each dataset that stores all relevant information
             testset_csv = self.__csvs[i]
             fp = testset_csv.filepath
-            ### savety_ check that y_true from raw output == targets from the csv to ensure correct ordering/dataset
             df = getdffromarrays(
                 labels=y_true,
                 out_class=predicted,
@@ -177,13 +176,9 @@ class Analyser:
                 filepath=fp,
             )
 
-        df["testset"] = testset
-
-        testfodlers2create = os.path.join(folder2create, str(testset))
-        if not os.path.exists(check_file):
             logger.info("Writing embedding to cache {}", check_file)
-            os.makedirs(testfodlers2create, exist_ok=True)
-            df.to_csv(testfodlers2create + "/dataframe.csv", index=False)
+            check_file.parent.mkdir(parents=True, exist_ok=True)
+            df.to_csv(check_file, index=False)
 
         return df
 

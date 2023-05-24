@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 import plotly.graph_objects as go
-from dash import ALL, MATCH, Dash, Input, Output, Patch, State, ctx, dcc, html
+from dash import ALL, Dash, Input, Output, Patch, State, ctx, dcc, html
 from dash.exceptions import PreventUpdate
 from loguru import logger
 
@@ -19,6 +19,7 @@ class AppState:
     base_path: Path
     analyser: Analyser | None = None
     path: Path | None = None
+    data_path: Path | None = None
 
 
 def _tab_latent_space():
@@ -165,7 +166,7 @@ def _sidebar_dataset_selection(app_state: AppState):
     ]
 
 
-def _sidebar_color_selection(app_state: AppState):
+def _sidebar_color_selection(_: AppState):
     return [
         html.H3(
             children="Color By:",
@@ -182,7 +183,7 @@ def _sidebar_color_selection(app_state: AppState):
     ]
 
 
-def _sidebar_sliders(app_state: AppState):
+def _sidebar_sliders(_: AppState):
     return [
         html.H3("Marker Settings:"),
         html.Div(
@@ -233,12 +234,10 @@ def _sidebar(app_state: AppState):
     )
 
 
-def _failure_triplet(testset: str, stats: list[dict]):
+def _failure_triplet(app_state: AppState, testset: str, stats: list[dict]):
     imgs = []
     for stat in stats:
-        imgpath = stat["filepath"].replace(
-            "/dkfz/cluster/gpu/data/OE0612/l049e/", "/home/t974t/Data/levin/"
-        )
+        imgpath = app_state.data_path / stat["filepath"]
         with open(imgpath, "rb") as img:
             data = base64.b64encode(img.read()).replace(b"\n", b"").decode("utf-8")
 
@@ -261,7 +260,11 @@ def _failure_triplet(testset: str, stats: list[dict]):
                         className="failure-stat",
                     ),
                 ],
-                id={"type": "failure-img", "id": imgpath, "testset": testset},
+                id={
+                    "type": "failure-img",
+                    "id": str(stat["filepath"]),
+                    "testset": testset,
+                },
                 className="failure-img-container",
             )
         )
@@ -282,10 +285,12 @@ def main():
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--experiments-path", type=Path)
+    parser.add_argument("--data-path", type=Path)
     args = parser.parse_args()
 
     app_state = AppState(
         base_path=args.experiments_path,
+        data_path=args.data_path,
     )
 
     app.layout = html.Div(
@@ -350,7 +355,7 @@ def main():
             cluster = []
             stats = app_state.analyser.representative(testset, cls)
             for stat in stats:
-                with open(stat["filepath"], "rb") as img:
+                with open(app_state.data_path / stat["filepath"], "rb") as img:
                     data = (
                         base64.b64encode(img.read()).replace(b"\n", b"").decode("utf-8")
                     )
@@ -401,7 +406,7 @@ def main():
         imgs = []
         for testset in testsets:
             stats = app_state.analyser.overconfident(testset)
-            imgs.append(_failure_triplet(testset, stats))
+            imgs.append(_failure_triplet(app_state, testset, stats))
 
         return imgs
 
@@ -416,10 +421,8 @@ def main():
                 raise PreventUpdate
             hoverData = clickData
 
-        imgpath = hoverData["points"][0]["text"]
-        imgpath = imgpath.replace(
-            "/dkfz/cluster/gpu/data/OE0612/l049e/", "/home/t974t/Data/levin/"
-        )
+        _imgpath = hoverData["points"][0]["text"]
+        imgpath = app_state.data_path / _imgpath
 
         label = hoverData["points"][0]["customdata"].split(",")[0]
         predicted = hoverData["points"][0]["customdata"].split(",")[1]
@@ -434,7 +437,7 @@ def main():
                     src=f"data:image/jpeg;base64,{data}",
                 ),
                 html.H5(f"Label: {label}, Predicted: {predicted}"),
-                html.P(f"{imgpath}", className="file-path"),
+                html.P(f"{_imgpath}", className="file-path"),
             ]
 
     @app.callback(
@@ -447,7 +450,9 @@ def main():
     )
     def update_path(value):
         app_state.path = app_state.base_path / value
-        app_state.analyser = Analyser(path=app_state.base_path / value)
+        app_state.analyser = Analyser(
+            path=app_state.base_path / value, base_path=app_state.base_path
+        )
         children = [
             _sidebar_class_selection(app_state),
             _sidebar_dataset_selection(app_state),
@@ -523,6 +528,8 @@ def main():
                 opacity=0.4,
                 mode="markers",
                 name="failure",
+                text=[stats["filepath"]],
+                customdata=[f"{stats['label']},{stats['predicted']}"],
                 hoverinfo="name",
                 marker={"size": 10, "color": "black", "symbol": "x"},
             )
@@ -582,6 +589,8 @@ def main():
                 opacity=0.4,
                 mode="markers",
                 name="cluster",
+                text=[stat["filepath"] for stat in stats],
+                customdata=[f"{stat['label']},{stat['predicted']}" for stat in stats],
                 hoverinfo="name",
                 marker={"size": 10, "color": "black", "symbol": "cross"},
             )
