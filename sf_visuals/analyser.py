@@ -1,7 +1,6 @@
 import itertools
 import os
 from functools import cache
-from io import BytesIO
 from pathlib import Path
 from typing import Literal
 
@@ -18,8 +17,6 @@ from sklearn.manifold import TSNE
 from sf_visuals.utils.utils import (
     getdffromarrays,
     kmeans_cluster_representative_without_failurelabel,
-    overconfident_images,
-    underconfident_images,
 )
 
 
@@ -47,9 +44,6 @@ class Analyser:
         self.__out_class = np.argmax(np.squeeze(self.__softmax_output), axis=1)
         self.__labels = np.squeeze(np.asarray(self.__raw_output[:, -2])).astype(int)
         self.__encoded_output = np.load(self.__path / "encoded_output.npz")["arr_0"]
-        self.__dataset_idx = np.squeeze(np.asarray(self.__raw_output[:, -1])).astype(
-            int
-        )
 
         classes = np.unique(self.__labels)
         self.__class2name = dict(zip(classes, classes))
@@ -79,8 +73,6 @@ class Analyser:
 
         self.__test_datasets_length = len(self.__ls_testsets)
         self.__csvs = []
-        self.__dataframes = {}
-        self.__encoderls = {}
         self.accuracies_dict = {}
         for i in range(int(self.__test_datasets_length)):
             try:
@@ -365,124 +357,3 @@ class Analyser:
     def get_coords_from_filename(self, filename: str, testset: str):
         df = self.embedding(testset)
         return df[df.filepath == filename].to_dict("records")[0]
-
-    def show_underconfident(self):
-        """
-        return matplotlib plot with underconfident images
-        """
-        self.__underconfimages = {}
-        for testset in self.__test_datasets:
-            df = self.__dataframes[testset]
-            self.__underconfimages[testset] = underconfident_images(
-                df=df, class2name=self.__class2name
-            )
-        return self.__underconfimages
-
-    def show_overconfident(self):
-        """
-        return matplotlib plot with overconfident images
-        """
-        self.__overconfimages = {}
-        for testset in self.__test_datasets:
-            df = self.__dataframes[testset]
-            self.__overconfimages[testset] = overconfident_images(
-                df=df, class2name=self.__class2name
-            )
-        return self.__overconfimages
-
-    def show_representative(self):
-        """
-        return matplotlib plot with representative images
-        """
-        self.__representative = {}
-        for testset in self.__test_datasets:
-            df = self.__dataframes[testset]
-            cla_accuracies = self.accuracies_dict[testset]
-            representative_per_class = {}
-            for cla in self.__class2plot:
-                representative_per_class[
-                    cla
-                ] = kmeans_cluster_representative_without_failurelabel(
-                    dataframe=df,
-                    cla_accuracies=cla_accuracies,
-                    cla=cla,
-                    class2name=self.__class2name,
-                )
-            self.__representative[testset] = representative_per_class
-        return self.__representative
-
-    def write_underconfident(self):
-        """
-        Create folder (is not existent) and write the underconfident images
-        """
-        for testset in self.__test_datasets:
-            testfodlers2create = os.path.join(self.folder2create, testset)
-            df = self.__dataframes[testset]
-            if not os.path.exists(testfodlers2create):
-                os.makedirs(testfodlers2create)
-            underconfident = self.__underconfimages[testset]
-            underconfident.savefig(f"{testfodlers2create}/{testset}_underconfident.pdf")
-
-    def write_overconfident(self):
-        """
-        Create folder (is not existent) and write the overconfident images
-        """
-        for testset in self.__test_datasets:
-            testfodlers2create = os.path.join(self.folder2create, testset)
-            df = self.__dataframes[testset]
-            if not os.path.exists(testfodlers2create):
-                os.makedirs(testfodlers2create)
-            overconfident = self.__overconfimages[testset]
-            overconfident.savefig(f"{testfodlers2create}/{testset}_overconfident.pdf")
-
-    def write_representative(self):
-        """
-        Create folder (is not existent) and write the representative images
-        """
-        for testset in self.__test_datasets:
-            testfodlers2create = os.path.join(self.folder2create, testset)
-            if not os.path.exists(testfodlers2create):
-                os.makedirs(testfodlers2create)
-            pdfs_wo_failure = []
-            for cla in self.__class2plot:
-                name = self.__class2name[cla]
-                repres_wo_failure = self.__representative[testset][cla]
-                cluster_plots_folder = f"{testfodlers2create}/{name}"
-                if not os.path.exists(cluster_plots_folder):
-                    os.makedirs(cluster_plots_folder)
-
-                path_repres_wo_failure = (
-                    f"{cluster_plots_folder}/imgs_{name}_repres_wo_faillabel.pdf"
-                )
-                pdfs_wo_failure.append(path_repres_wo_failure)
-                pdfs_represantative = []
-                repres_wo_failure.savefig(path_repres_wo_failure)
-
-                # merger = PdfMerger()
-                # for pdf_3 in pdfs_wo_failure:
-                #     merger.append(pdf_3)
-                # merger.write(
-                #     f"{testfodlers2create}/{testset}_imgs_represantative_wo_fail.pdf"
-                # )
-                # print(
-                #     "Writing Represantiative to:",
-                #     f"{testfodlers2create}/{testset}_imgs_represantative_wo_fail.pdf",
-                # )
-                #
-                # merger.close()
-                #
-                # self.__encoderls[testset][cla].write_html(
-                #     f"{cluster_plots_folder}/latentspace_{name}.html"
-                # )
-                # self.__encoderls[testset][cla].write_image(
-                #     f"{cluster_plots_folder}/latentspace_{name}.png", scale=3
-                # )
-
-    def write_all(self):
-        """
-        Create folder (is not existent) and write the failures as well as representative images
-        can just call all other write functions
-        """
-        self.write_overconfident()
-        self.write_underconfident()
-        self.write_representative()
