@@ -17,8 +17,8 @@ from sf_visuals.analyser import Analyser
 @dataclass
 class AppState:
     base_path: Path
-    path: Path
-    analyser: Analyser
+    analyser: Analyser | None = None
+    path: Path | None = None
 
 
 def _tab_latent_space():
@@ -62,15 +62,27 @@ def _tab_failures():
             id="tab-failures",
             className="tab-custom",
             children=[
-                dcc.Loading(
-                    html.Div(
-                        id="representative-view",
-                        className="representative-view",
-                    ),
+                html.Div(
+                    [
+                        html.H2("Representative Images"),
+                        dcc.Loading(
+                            html.Div(
+                                id="representative-view",
+                                className="representative-view",
+                            ),
+                        ),
+                    ],
+                    className="representative-view-container",
                 ),
                 html.Div(
-                    id="failure-view",
-                    className="failure-view",
+                    [
+                        html.H2("Faliure Images"),
+                        html.Div(
+                            id="failure-view",
+                            className="failure-view",
+                        ),
+                    ],
+                    className="failure-view-container",
                 ),
             ],
         ),
@@ -89,7 +101,7 @@ def _sidebar_folder_selection(app_state: AppState):
         html.H2("Experiment folder:"),
         dcc.Dropdown(
             all_paths,
-            str(app_state.path.relative_to(app_state.base_path)),
+            value=None,
             id="base-path-dd",
             clearable=False,
         ),
@@ -98,6 +110,9 @@ def _sidebar_folder_selection(app_state: AppState):
 
 
 def _sidebar_class_selection(app_state: AppState):
+    if app_state.analyser is None:
+        return [html.H3("Classes:")]
+
     return [
         html.H3("Classes:"),
         dcc.Checklist(
@@ -120,6 +135,9 @@ def _sidebar_class_selection(app_state: AppState):
 
 
 def _sidebar_dataset_selection(app_state: AppState):
+    if app_state.analyser is None:
+        return [html.H3("Datasets:")]
+
     return [
         html.H3("Datasets:"),
         dcc.Checklist(
@@ -205,13 +223,13 @@ def _sidebar(app_state: AppState):
     return html.Div(
         id="sidebar",
         style={"display": "inline-block"},
-        children=(
-            _sidebar_folder_selection(app_state)
-            + _sidebar_class_selection(app_state)
-            + _sidebar_dataset_selection(app_state)
-            + _sidebar_color_selection(app_state)
-            + _sidebar_sliders(app_state)
-        ),
+        children=[
+            html.Div(_sidebar_folder_selection(app_state)),
+            html.Div(_sidebar_class_selection(app_state), id="sidebar-classes"),
+            html.Div(_sidebar_dataset_selection(app_state), id="sidebar-datasets"),
+            html.Div(_sidebar_color_selection(app_state), id="sidebar-colorby"),
+            html.Div(_sidebar_sliders(app_state), id="sidebar-sliders"),
+        ],
     )
 
 
@@ -262,15 +280,11 @@ def main():
     app = Dash(__name__)
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--path", type=Path)
+    parser.add_argument("--experiments-path", type=Path)
     args = parser.parse_args()
 
     app_state = AppState(
-        base_path=Path(
-            "/home/t974t/NetworkDrives/E130-Personal/Kobelke/cluster_checkpoints/"
-        ),
-        path=args.path,
-        analyser=Analyser(path=args.path),
+        base_path=args.experiments_path,
     )
 
     app.layout = html.Div(
@@ -423,20 +437,22 @@ def main():
             ]
 
     @app.callback(
-        Output("sidebar", "children"),
+        Output("sidebar-classes", "children"),
+        Output("sidebar-datasets", "children"),
+        Output("sidebar-colorby", "children"),
+        Output("sidebar-sliders", "children"),
         Input("base-path-dd", "value"),
         prevent_initial_call=True,
     )
     def update_path(value):
         app_state.path = app_state.base_path / value
         app_state.analyser = Analyser(path=app_state.base_path / value)
-        children = (
-            _sidebar_folder_selection(app_state)
-            + _sidebar_class_selection(app_state)
-            + _sidebar_dataset_selection(app_state)
-            + _sidebar_color_selection(app_state)
-            + _sidebar_sliders(app_state)
-        )
+        children = [
+            _sidebar_class_selection(app_state),
+            _sidebar_dataset_selection(app_state),
+            _sidebar_color_selection(app_state),
+            _sidebar_sliders(app_state),
+        ]
         return children
 
     @app.callback(
@@ -447,6 +463,9 @@ def main():
         prevent_initial_call=True,
     )
     def update_marker_size(figure, marker_size, marker_alpha):
+        if figure is None:
+            raise PreventUpdate
+
         n_traces = len(figure["data"])
         patch = Patch()
 
