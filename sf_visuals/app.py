@@ -278,6 +278,7 @@ def _failure_triplet(testset: str, stats: list[dict]):
 
 def main():
     app = Dash(__name__)
+    app.config.suppress_callback_exceptions = True
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--experiments-path", type=Path)
@@ -587,7 +588,7 @@ def main():
         )
         return patched_figure
 
-    app.run(host="0.0.0.0", debug=True, port="8055")
+    app.run(host="0.0.0.0", debug=True, dev_tools_ui=False, port="8055")
 
 
 if __name__ == "__main__":
