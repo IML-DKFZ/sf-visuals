@@ -307,12 +307,17 @@ def main():
 
     @app.callback(
         Output("latentspace", "figure"),
+        State("latentspace", "figure"),
         Input("checklist-testsets", "value"),
         Input("selection-testset", "value"),
         Input("checklist-classes", "value"),
         Input("checklist-colorby", "value"),
+        State("marker-size", "value"),
+        State("marker-alpha", "value"),
     )
-    def update_testset_latent_space(iid_ood, testset: str, classes, colorby):
+    def update_testset_latent_space(
+        prev_figure, iid_ood, testset: str, classes, colorby, marker_size, marker_alpha
+    ):
         testsets = []
         if "iid" in iid_ood:
             testsets.append("iid")
@@ -323,12 +328,24 @@ def main():
             return None
 
         logger.info("Testsets to display: {}", testsets)
+        logger.debug(f"{ctx.triggered=}")
 
         figure = app_state.analyser.plot_latentspace(
             tuple(testsets), classes2plot=tuple(classes), coloring=colorby
         )
 
         figure["layout"]["uirevision"] = True
+        logger.debug(f"{ctx.triggered=}")
+
+        n_traces = len(figure["data"])
+        for i in range(n_traces):
+            figure["data"][i]["marker"]["size"] = marker_size
+            figure["data"][i]["opacity"] = marker_alpha
+
+        if prev_figure is not None:
+            patch = Patch()
+            patch["data"] = figure["data"]
+            return patch
 
         return figure
 
@@ -340,6 +357,7 @@ def main():
         Input("checklist-testsets", "value"),
     )
     def update_testset_representative(base_path, classes, testset, iid_ood):
+        logger.debug(f"{ctx.triggered=}")
         testsets = []
         if "iid" in iid_ood:
             testsets.append("iid")
@@ -393,6 +411,7 @@ def main():
         Input("checklist-testsets", "value"),
     )
     def update_testset_failures(base_path, classes, testset, iid_ood):
+        logger.debug(f"{ctx.triggered=}")
         testsets = []
         if "iid" in iid_ood:
             testsets.append("iid")
@@ -416,6 +435,7 @@ def main():
         Input("latentspace", "clickData"),
     )
     def update_on_hover(hoverData, clickData):
+        logger.debug(f"{ctx.triggered=}")
         if hoverData is None:
             if clickData is None:
                 raise PreventUpdate
@@ -449,6 +469,7 @@ def main():
         prevent_initial_call=True,
     )
     def update_path(value):
+        logger.debug(f"{ctx.triggered=}")
         app_state.path = app_state.base_path / value
         app_state.analyser = Analyser(
             path=app_state.base_path / value, base_path=app_state.base_path
@@ -486,6 +507,7 @@ def main():
         Input({"type": "failure-img", "id": ALL, "testset": ALL}, "n_clicks"),
     )
     def on_click_failure_highlight(n_clicks):
+        logger.debug(f"{ctx.triggered=}")
         if ctx.triggered_id is None:
             return ["failure-img-container" for _ in ctx.outputs_list]
 
@@ -504,10 +526,14 @@ def main():
         prevent_initial_call=True,
     )
     def on_click_failure_latentspace(figure, n_clicks):
+        logger.debug(f"{ctx.triggered=}")
         if ctx.triggered_id is None:
             raise PreventUpdate
 
         if figure is None:
+            raise PreventUpdate
+
+        if not any(n_clicks):
             raise PreventUpdate
 
         stats = app_state.analyser.get_coords_from_filename(
@@ -543,6 +569,7 @@ def main():
         Input({"type": "cluster-container", "class": ALL, "testset": ALL}, "n_clicks"),
     )
     def on_click_cluster_highlight(n_clicks):
+        logger.debug(f"{ctx.triggered=}")
         if ctx.triggered_id is None:
             return ["cluster-container-container" for _ in ctx.outputs_list]
 
@@ -564,6 +591,7 @@ def main():
         prevent_initial_call=True,
     )
     def on_click_cluster_latentspace(figure, n_clicks):
+        logger.debug(f"{ctx.triggered=}")
         if ctx.triggered_id is None:
             raise PreventUpdate
 
