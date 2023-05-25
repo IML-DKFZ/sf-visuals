@@ -180,6 +180,8 @@ class Analyser:
             check_file.parent.mkdir(parents=True, exist_ok=True)
             df.to_csv(check_file, index=False)
 
+        df["testset"] = testset
+
         return df
 
     @cache
