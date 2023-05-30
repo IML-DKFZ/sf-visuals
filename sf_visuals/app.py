@@ -110,6 +110,21 @@ def _sidebar_folder_selection(app_state: AppState):
     ]
 
 
+def _sidebar_confid_selection(app_state: AppState):
+    if app_state.analyser is None:
+        return [html.H3("CSF:")]
+
+    return [
+        html.H3("CSF:"),
+        dcc.Dropdown(
+            app_state.analyser.confid_names,
+            value="det_mcp",
+            id="dd-confid-name",
+            clearable=False,
+        ),
+    ]
+
+
 def _sidebar_class_selection(app_state: AppState):
     if app_state.analyser is None:
         return [html.H3("Classes:")]
@@ -226,6 +241,7 @@ def _sidebar(app_state: AppState):
         style={"display": "inline-block"},
         children=[
             html.Div(_sidebar_folder_selection(app_state)),
+            html.Div(_sidebar_confid_selection(app_state), id="sidebar-confid"),
             html.Div(_sidebar_class_selection(app_state), id="sidebar-classes"),
             html.Div(_sidebar_dataset_selection(app_state), id="sidebar-datasets"),
             html.Div(_sidebar_color_selection(app_state), id="sidebar-colorby"),
@@ -314,9 +330,17 @@ def main():
         Input("checklist-colorby", "value"),
         State("marker-size", "value"),
         State("marker-alpha", "value"),
+        Input("dd-confid-name", "value"),
     )
     def update_testset_latent_space(
-        prev_figure, iid_ood, testset: str, classes, colorby, marker_size, marker_alpha
+        prev_figure,
+        iid_ood,
+        testset: str,
+        classes,
+        colorby,
+        marker_size,
+        marker_alpha,
+        confid_name,
     ):
         testsets = []
         if "iid" in iid_ood:
@@ -461,6 +485,7 @@ def main():
             ]
 
     @app.callback(
+        Output("sidebar-confid", "children"),
         Output("sidebar-classes", "children"),
         Output("sidebar-datasets", "children"),
         Output("sidebar-colorby", "children"),
@@ -475,6 +500,7 @@ def main():
             path=app_state.base_path / value, base_path=app_state.base_path
         )
         children = [
+            _sidebar_confid_selection(app_state),
             _sidebar_class_selection(app_state),
             _sidebar_dataset_selection(app_state),
             _sidebar_color_selection(app_state),

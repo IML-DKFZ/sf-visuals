@@ -68,6 +68,8 @@ class Analyser:
                 config["data"]["dataset"], ""
             )
 
+        self.__confid_names = config["eval"]["confidence_measures"]["test"]
+
         flat_test_set_list = list(map(_rename_datasets, flat_test_set_list))
 
         self.__ls_testsets = flat_test_set_list
@@ -118,6 +120,10 @@ class Analyser:
             "rgb(23, 180, 207)",
         ]
         logger.info("Done initializating Analyzer")
+
+    @property
+    def confid_names(self):
+        return self.__confid_names
 
     @property
     def classes(self):
