@@ -270,7 +270,7 @@ def _failure_triplet(app_state: AppState, testset: str, stats: list[dict]):
                         [
                             html.P(f"Pr: {stat['predicted']}"),
                             html.P(f"GT: {stat['label']}"),
-                            html.P(f"C : {stat['confid']}"),
+                            html.P(f"C : {stat['confid']:.4f}"),
                             html.P(f"{stat['filepath']}", className="file-path"),
                         ],
                         className="failure-stat",
@@ -472,8 +472,9 @@ def main():
         _imgpath = hoverData["points"][0]["text"]
         imgpath = app_state.data_path / _imgpath
 
-        label = hoverData["points"][0]["customdata"].split(",")[0]
-        predicted = hoverData["points"][0]["customdata"].split(",")[1]
+        label = int(hoverData["points"][0]["customdata"].split(",")[0])
+        predicted = int(hoverData["points"][0]["customdata"].split(",")[1])
+        confid = float(hoverData["points"][0]["customdata"].split(",")[2])
 
         with open(imgpath, "rb") as img:
             data = base64.b64encode(img.read()).replace(b"\n", b"").decode("utf-8")
@@ -484,7 +485,9 @@ def main():
                     height="512px",
                     src=f"data:image/jpeg;base64,{data}",
                 ),
-                html.H5(f"Label: {label}, Predicted: {predicted}"),
+                html.H5(
+                    f"Label: {label}, Predicted: {predicted}, Confidence: {confid:.4f}"
+                ),
                 html.P(f"{_imgpath}", className="file-path"),
             ]
 

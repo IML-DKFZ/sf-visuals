@@ -344,9 +344,9 @@ class Analyser:
                     opacity=0.4,
                     mode="markers",
                     name=label,
-                    customdata=data.label.astype(str).str.cat(
-                        data.predicted.astype(str), sep=","
-                    ),
+                    customdata=data.label.astype(str)
+                    .str.cat(data.predicted.astype(str), sep=",")
+                    .str.cat(data["_confid"].astype(str), sep=","),
                     text=data["filepath"],
                     hoverinfo="name",
                     marker=markers_fn(data),

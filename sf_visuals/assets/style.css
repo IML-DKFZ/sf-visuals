@@ -246,6 +246,7 @@
 .file-path {
   line-height: 1rem !important;
   font-size: 1rem !important;
+  word-wrap: break-word;
 }
 
 html {
