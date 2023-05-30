@@ -381,9 +381,7 @@ class Analyser:
             df["confid"] = confid_func(df.filter(like="softmax").to_numpy())
         elif "mcd" in csf:
             confid_func = confid_scores.get_confid_function(csf)
-            mcd_dist = np.concatenate(
-                [self.get_mcd_outputs(testset) for testset in testsets]
-            )
+            mcd_dist = self.get_mcd_outputs(testset)
             df["confid"] = confid_func(mcd_dist.mean(axis=2), mcd_dist)
         elif "ext" in csf:
             df["confid"] = df["ext_confid"]
@@ -393,6 +391,7 @@ class Analyser:
         df = df.sort_values("confid", ascending=False, ignore_index=True)
         return (
             df[["filepath", "confid", "predicted", "label"]]
+            .drop_duplicates(["filepath", "predicted", "label"])
             .iloc[:3, :]
             .to_dict("records")
         )
