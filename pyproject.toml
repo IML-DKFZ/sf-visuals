@@ -24,6 +24,8 @@ dependencies = [
     "plotly>=5.11.0",
     "scikit-learn",
     "scipy>=1.9.3",
+    "fd-shifts @ git+https://github.com/iml-dkfz/fd-shifts.git",
+    "yaml",
 ]
 [project.optional-dependencies]
 dev = [

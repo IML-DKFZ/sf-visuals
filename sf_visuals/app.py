@@ -355,7 +355,10 @@ def main():
         logger.debug(f"{ctx.triggered=}")
 
         figure = app_state.analyser.plot_latentspace(
-            tuple(testsets), classes2plot=tuple(classes), coloring=colorby
+            tuple(testsets),
+            classes2plot=tuple(classes),
+            coloring=colorby,
+            csf=confid_name,
         )
 
         figure["layout"]["uirevision"] = True
@@ -433,8 +436,9 @@ def main():
         Input("checklist-classes", "value"),
         Input("selection-testset", "value"),
         Input("checklist-testsets", "value"),
+        Input("dd-confid-name", "value"),
     )
-    def update_testset_failures(base_path, classes, testset, iid_ood):
+    def update_testset_failures(base_path, classes, testset, iid_ood, confid_name):
         logger.debug(f"{ctx.triggered=}")
         testsets = []
         if "iid" in iid_ood:
@@ -448,7 +452,7 @@ def main():
 
         imgs = []
         for testset in testsets:
-            stats = app_state.analyser.overconfident(testset)
+            stats = app_state.analyser.overconfident(testset, csf=confid_name)
             imgs.append(_failure_triplet(app_state, testset, stats))
 
         return imgs

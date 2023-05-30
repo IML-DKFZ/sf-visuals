@@ -1,6 +1,6 @@
 import itertools
 import os
-from functools import cache
+from functools import cache, cached_property
 from pathlib import Path
 from typing import Literal
 
@@ -9,6 +9,7 @@ import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
 import yaml
+from fd_shifts.analysis import confid_scores
 from loguru import logger
 from scipy.stats import mode
 from sklearn.decomposition import PCA
@@ -42,6 +43,8 @@ class Analyser:
         logger.info("Loading Data for {}", path)
         self.__base_path = base_path
         self.__raw_output = np.load(self.__path / "raw_output.npz")["arr_0"]
+        self.__raw_output_dist = np.load(self.__path / "raw_output_dist.npz")["arr_0"]
+        self.__external_confid = np.load(self.__path / "external_confids.npz")["arr_0"]
         self.__softmax_output = self.__raw_output[:, :-2]
         self.__out_class = np.argmax(np.squeeze(self.__softmax_output), axis=1)
         self.__labels = np.squeeze(np.asarray(self.__raw_output[:, -2])).astype(int)
@@ -138,6 +141,12 @@ class Analyser:
         return self.__test_datasets
 
     @cache
+    def get_mcd_outputs(self, testset: str):
+        i = self.__ls_testsets.index(testset)
+        boolarray = self.__encoded_output[:, -1] == i
+        return self.__raw_output_dist[boolarray]
+
+    @cache
     def embedding(self, testset: str):
         """Compute the embedding for a given testset.
 
@@ -154,6 +163,7 @@ class Analyser:
         predicted = self.__out_class[boolarray]
         encoded = self.__encoded_output[boolarray][:, :-1]
         softmax = self.__softmax_beginning[boolarray]
+        ext = self.__external_confid[boolarray]
         y_true = self.__labels[boolarray]
 
         folder2create = (
@@ -187,6 +197,7 @@ class Analyser:
             df.to_csv(check_file, index=False)
 
         df["testset"] = testset
+        df["ext_confid"] = ext
 
         return df
 
@@ -198,15 +209,32 @@ class Analyser:
         coloring: Literal[
             "confidence", "source-target", "class-confusion"
         ] = "confidence",
+        csf: str = "det_mcp",
     ):
         df = pd.concat([self.embedding(t) for t in testsets])
 
         if classes2plot is None:
             classes2plot = self.__class2plot
 
-        df["confid"] = (df.filter(like="softmax").max(axis=1) > 0.8).astype(float)
-        vmin = df["confid"].min()
-        vmax = df["confid"].max()
+        logger.debug(f"{csf=}")
+        if "det" in csf:
+            confid_func = confid_scores.get_confid_function(csf)
+            df["_confid"] = confid_func(df.filter(like="softmax").to_numpy())
+            logger.debug(f"{df['_confid']=}")
+        elif "mcd" in csf:
+            confid_func = confid_scores.get_confid_function(csf)
+            mcd_dist = np.concatenate(
+                [self.get_mcd_outputs(testset) for testset in testsets]
+            )
+            df["_confid"] = confid_func(mcd_dist.mean(axis=2), mcd_dist)
+        elif "ext" in csf:
+            df["_confid"] = df["ext_confid"]
+        else:
+            raise NotImplementedError
+
+        # df["_confid"] = (df["_confid"] > 0.8).astype(float)
+        vmin = df["_confid"].min()
+        vmax = df["_confid"].max()
 
         xmin = np.percentile(df["0"], 1)
         xmax = np.percentile(df["0"], 99)
@@ -256,7 +284,7 @@ class Analyser:
                         "size": 5,
                         "cmin": vmin,
                         "cmax": vmax,
-                        "color": data["confid"],
+                        "color": data["_confid"],
                         "colorscale": colorscales[0 if crl else 1],
                         "symbol": markers[cl % len(markers)],
                     },
@@ -343,12 +371,24 @@ class Analyser:
         )
 
     @cache
-    def overconfident(self, testset: str):
+    def overconfident(self, testset: str, csf: str = "det_mcp"):
         """
         return matplotlib plot with overconfident images
         """
         df = self.embedding(testset)
-        df["confid"] = (df.filter(like="softmax").max(axis=1) > 0.8).astype(float)
+        if "det" in csf:
+            confid_func = confid_scores.get_confid_function(csf)
+            df["confid"] = confid_func(df.filter(like="softmax").to_numpy())
+        elif "mcd" in csf:
+            confid_func = confid_scores.get_confid_function(csf)
+            mcd_dist = np.concatenate(
+                [self.get_mcd_outputs(testset) for testset in testsets]
+            )
+            df["confid"] = confid_func(mcd_dist.mean(axis=2), mcd_dist)
+        elif "ext" in csf:
+            df["confid"] = df["ext_confid"]
+        else:
+            raise NotImplementedError
         df = df[df.label != df.predicted]
         df = df.sort_values("confid", ascending=False, ignore_index=True)
         return (
