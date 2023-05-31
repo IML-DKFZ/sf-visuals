@@ -65,7 +65,23 @@ def _tab_failures():
             children=[
                 html.Div(
                     [
-                        html.H2("Representative Images"),
+                        html.Div(
+                            [
+                                html.H2(
+                                    "Representative Images",
+                                    style={
+                                        "display": "inline-block",
+                                        "margin-right": "10px",
+                                    },
+                                ),
+                                html.Button(
+                                    "Clear",
+                                    id="clear-representative",
+                                    style={"display": "none"},
+                                ),
+                            ],
+                            style={"display": "flex", "align-items": "center"},
+                        ),
                         dcc.Loading(
                             html.Div(
                                 id="representative-view",
@@ -77,7 +93,23 @@ def _tab_failures():
                 ),
                 html.Div(
                     [
-                        html.H2("Faliure Images"),
+                        html.Div(
+                            [
+                                html.H2(
+                                    "Faliure Images",
+                                    style={
+                                        "display": "inline-block",
+                                        "margin-right": "10px",
+                                    },
+                                ),
+                                html.Button(
+                                    "Clear",
+                                    id="clear-failures",
+                                    style={"display": "none"},
+                                ),
+                            ],
+                            style={"display": "flex", "align-items": "center"},
+                        ),
                         html.Div(
                             id="failure-view",
                             className="failure-view",
@@ -537,20 +569,25 @@ def main():
 
     @app.callback(
         Output({"type": "failure-img", "id": ALL, "testset": ALL}, "className"),
+        Output("clear-failures", "style"),
         Input({"type": "failure-img", "id": ALL, "testset": ALL}, "n_clicks"),
     )
     def on_click_failure_highlight(n_clicks):
+        button = Patch()
         logger.debug(f"{ctx.triggered=}")
-        if ctx.triggered_id is None:
-            return ["failure-img-container" for _ in ctx.outputs_list]
+        if ctx.triggered_id is None or not any(n_clicks):
+            button["display"] = "none"
+            return ["failure-img-container" for _ in ctx.outputs_list[0]], button
+
+        button["display"] = "inline-block"
 
         output = []
-        for o in ctx.outputs_list:
+        for o in ctx.outputs_list[0]:
             if o["id"]["id"] == ctx.triggered_id["id"]:
                 output.append("failure-img-container-active")
             else:
                 output.append("failure-img-container")
-        return output
+        return output, button
 
     @app.callback(
         Output("latentspace", "figure", allow_duplicate=True),
@@ -599,15 +636,20 @@ def main():
         Output(
             {"type": "cluster-container", "class": ALL, "testset": ALL}, "className"
         ),
+        Output("clear-representative", "style"),
         Input({"type": "cluster-container", "class": ALL, "testset": ALL}, "n_clicks"),
     )
     def on_click_cluster_highlight(n_clicks):
+        button = Patch()
         logger.debug(f"{ctx.triggered=}")
-        if ctx.triggered_id is None:
-            return ["cluster-container-container" for _ in ctx.outputs_list]
+        if ctx.triggered_id is None or not any(n_clicks):
+            button["display"] = "none"
+            return ["cluster-container-container" for _ in ctx.outputs_list[0]], button
+
+        button["display"] = "inline-block"
 
         output = []
-        for o in ctx.outputs_list:
+        for o in ctx.outputs_list[0]:
             if (
                 o["id"]["class"] == ctx.triggered_id["class"]
                 and o["id"]["testset"] == ctx.triggered_id["testset"]
@@ -615,7 +657,7 @@ def main():
                 output.append("cluster-container-container-active")
             else:
                 output.append("cluster-container-container")
-        return output
+        return output, button
 
     @app.callback(
         Output("latentspace", "figure", allow_duplicate=True),
@@ -657,6 +699,57 @@ def main():
             )
         )
         return patched_figure
+
+    @app.callback(
+        Output(
+            {"type": "cluster-container", "class": ALL, "testset": ALL},
+            "className",
+            allow_duplicate=True,
+        ),
+        Output("latentspace", "figure", allow_duplicate=True),
+        Output("clear-representative", "style", allow_duplicate=True),
+        State("latentspace", "figure"),
+        Input("clear-representative", "n_clicks"),
+        prevent_initial_call=True,
+    )
+    def on_clear_cluster_latentspace(figure, n_clicks):
+        button = Patch()
+        button["display"] = "none"
+        patched_figure = Patch()
+        for i in range(len(figure["data"])):
+            if figure["data"][i]["name"] == "cluster":
+                del patched_figure["data"][i]
+        return (
+            ["cluster-container-container" for _ in ctx.outputs_list[0]],
+            patched_figure,
+            button,
+        )
+
+    @app.callback(
+        Output(
+            {"type": "failure-img", "id": ALL, "testset": ALL},
+            "className",
+            allow_duplicate=True,
+        ),
+        Output("latentspace", "figure", allow_duplicate=True),
+        Output("clear-failures", "style", allow_duplicate=True),
+        State("latentspace", "figure"),
+        Input("clear-failures", "n_clicks"),
+        prevent_initial_call=True,
+    )
+    def on_clear_failure_latentspace(figure, n_clicks):
+        button = Patch()
+        button["display"] = "none"
+        patched_figure = Patch()
+        for i in range(len(figure["data"])):
+            if figure["data"][i]["name"] == "failure":
+                del patched_figure["data"][i]
+
+        return (
+            ["failure-img-container" for _ in ctx.outputs_list[0]],
+            patched_figure,
+            button,
+        )
 
     app.run(host="0.0.0.0", debug=True, dev_tools_ui=False, port="8055")
 
