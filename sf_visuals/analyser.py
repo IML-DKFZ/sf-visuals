@@ -9,7 +9,7 @@ import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
 import yaml
-from fd_shifts.analysis import confid_scores
+from fd_shifts.analysis import PlattScaling, confid_scores
 from loguru import logger
 from scipy.stats import mode
 from sklearn.decomposition import PCA
@@ -202,6 +202,28 @@ class Analyser:
         return df
 
     @cache
+    def get_platt_scaling(self, csf: str):
+        df = self.embedding("validation")
+
+        if "det" in csf:
+            confid_func = confid_scores.get_confid_function(csf)
+            df["_confid"] = confid_func(df.filter(like="softmax").to_numpy())
+            logger.debug(f"{df['_confid']=}")
+        elif "mcd" in csf:
+            confid_func = confid_scores.get_confid_function(csf)
+            mcd_dist = self.get_mcd_outputs("validation")
+            df["_confid"] = confid_func(mcd_dist.mean(axis=2), mcd_dist)
+        elif "ext" in csf:
+            df["_confid"] = df["ext_confid"]
+        else:
+            raise NotImplementedError
+
+        return PlattScaling(
+            df["_confid"].to_numpy(),
+            (df["predicted"] == df["label"]).astype(int).to_numpy(),
+        )
+
+    @cache
     def plot_latentspace(
         self,
         testsets: tuple[str, ...],
@@ -211,30 +233,13 @@ class Analyser:
         ] = "confidence",
         csf: str = "det_mcp",
     ):
-        df = pd.concat([self.embedding(t) for t in testsets])
+        df = pd.concat([self.with_confid(t, csf) for t in testsets])
 
         if classes2plot is None:
             classes2plot = self.__class2plot
 
-        logger.debug(f"{csf=}")
-        if "det" in csf:
-            confid_func = confid_scores.get_confid_function(csf)
-            df["_confid"] = confid_func(df.filter(like="softmax").to_numpy())
-            logger.debug(f"{df['_confid']=}")
-        elif "mcd" in csf:
-            confid_func = confid_scores.get_confid_function(csf)
-            mcd_dist = np.concatenate(
-                [self.get_mcd_outputs(testset) for testset in testsets]
-            )
-            df["_confid"] = confid_func(mcd_dist.mean(axis=2), mcd_dist)
-        elif "ext" in csf:
-            df["_confid"] = df["ext_confid"]
-        else:
-            raise NotImplementedError
-
-        # df["_confid"] = (df["_confid"] > 0.8).astype(float)
-        vmin = df["_confid"].min()
-        vmax = df["_confid"].max()
+        vmin = df["confid"].min()
+        vmax = df["confid"].max()
 
         xmin = np.percentile(df["0"], 1)
         xmax = np.percentile(df["0"], 99)
@@ -284,8 +289,13 @@ class Analyser:
                         "size": 5,
                         "cmin": vmin,
                         "cmax": vmax,
-                        "color": data["_confid"],
+                        "color": data["confid"],
                         "colorscale": colorscales[0 if crl else 1],
+                        "colorbar": {
+                            "title": f"{'C' if crl else'Inc'}orrect Confidence",
+                            "orientation": "h",
+                            "y": 1.02 + 0.1 * (1 if crl else 0),
+                        },
                         "symbol": markers[cl % len(markers)],
                     },
                 )
@@ -346,7 +356,7 @@ class Analyser:
                     name=label,
                     customdata=data.label.astype(str)
                     .str.cat(data.predicted.astype(str), sep=",")
-                    .str.cat(data["_confid"].astype(str), sep=","),
+                    .str.cat(data["confid"].astype(str), sep=","),
                     text=data["filepath"],
                     hoverinfo="name",
                     marker=markers_fn(data),
@@ -371,10 +381,7 @@ class Analyser:
         )
 
     @cache
-    def overconfident(self, testset: str, csf: str = "det_mcp"):
-        """
-        return matplotlib plot with overconfident images
-        """
+    def with_confid(self, testset, csf):
         df = self.embedding(testset)
         if "det" in csf:
             confid_func = confid_scores.get_confid_function(csf)
@@ -387,6 +394,20 @@ class Analyser:
             df["confid"] = df["ext_confid"]
         else:
             raise NotImplementedError
+
+        if any(
+            cfd in csf for cfd in ["_pe", "_ee", "_mi", "_sv", "bpd", "maha", "_mls"]
+        ):
+            df["confid"] = self.get_platt_scaling(csf)(df["confid"].to_numpy())
+
+        return df
+
+    @cache
+    def overconfident(self, testset: str, csf: str = "det_mcp"):
+        """
+        return matplotlib plot with overconfident images
+        """
+        df = self.with_confid(testset, csf)
         df = df[df.label != df.predicted]
         df = df.sort_values("confid", ascending=False, ignore_index=True)
         return (

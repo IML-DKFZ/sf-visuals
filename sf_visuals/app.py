@@ -110,9 +110,11 @@ def _tab_failures():
                             ],
                             style={"display": "flex", "align-items": "center"},
                         ),
-                        html.Div(
-                            id="failure-view",
-                            className="failure-view",
+                        dcc.Loading(
+                            html.Div(
+                                id="failure-view",
+                                className="failure-view",
+                            ),
                         ),
                     ],
                     className="failure-view-container",
