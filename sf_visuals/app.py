@@ -67,7 +67,7 @@ def _tab_failures():
                     [
                         html.Div(
                             [
-                                html.H2(
+                                html.H1(
                                     "Representative Images",
                                     style={
                                         "display": "inline-block",
@@ -95,7 +95,7 @@ def _tab_failures():
                     [
                         html.Div(
                             [
-                                html.H2(
+                                html.H1(
                                     "Faliure Images",
                                     style={
                                         "display": "inline-block",
@@ -126,14 +126,17 @@ def _tab_failures():
 
 def _sidebar_folder_selection(app_state: AppState):
     all_paths = sorted(
-        [
-            str(path.parent.relative_to(app_state.base_path))
-            for path in app_state.base_path.glob("**/test_results")
-        ]
+        filter(
+            lambda p: not str(p).startswith("."),
+            [
+                str(path.parent.relative_to(app_state.base_path))
+                for path in app_state.base_path.glob("**/test_results")
+            ],
+        )
     )
 
     return [
-        html.H2("Experiment folder:"),
+        html.H1("Experiment folder:"),
         dcc.Dropdown(
             all_paths,
             value=None,
@@ -146,10 +149,10 @@ def _sidebar_folder_selection(app_state: AppState):
 
 def _sidebar_confid_selection(app_state: AppState):
     if app_state.analyser is None:
-        return [html.H3("CSF:")]
+        return [html.H2("CSF:")]
 
     return [
-        html.H3("CSF:"),
+        html.H2("CSF:"),
         dcc.Dropdown(
             app_state.analyser.confid_names,
             value="det_mcp",
@@ -161,10 +164,10 @@ def _sidebar_confid_selection(app_state: AppState):
 
 def _sidebar_class_selection(app_state: AppState):
     if app_state.analyser is None:
-        return [html.H3("Classes:")]
+        return [html.H2("Classes:")]
 
     return [
-        html.H3("Classes:"),
+        html.H2("Classes:"),
         dcc.Checklist(
             [
                 {
@@ -186,10 +189,10 @@ def _sidebar_class_selection(app_state: AppState):
 
 def _sidebar_dataset_selection(app_state: AppState):
     if app_state.analyser is None:
-        return [html.H3("Datasets:")]
+        return [html.H2("Datasets:")]
 
     return [
-        html.H3("Datasets:"),
+        html.H2("Datasets:"),
         dcc.Checklist(
             ["iid", "ood"],
             ["iid", "ood"],
@@ -217,7 +220,7 @@ def _sidebar_dataset_selection(app_state: AppState):
 
 def _sidebar_color_selection(_: AppState):
     return [
-        html.H3(
+        html.H2(
             children="Color By:",
         ),
         dcc.RadioItems(
@@ -234,7 +237,7 @@ def _sidebar_color_selection(_: AppState):
 
 def _sidebar_sliders(_: AppState):
     return [
-        html.H3("Marker Settings:"),
+        html.H2("Marker Settings:"),
         html.Div(
             [
                 html.P("Marker Size"),
@@ -320,7 +323,7 @@ def _failure_triplet(app_state: AppState, testset: str, stats: list[dict]):
         )
     return html.Div(
         children=[
-            html.H5(f"Testset: {testset}"),
+            html.H2(f"Testset: {testset}"),
             html.Div(
                 imgs,
                 className="failure-container",
@@ -454,7 +457,7 @@ def main():
             imgs.append(
                 html.Div(
                     children=[
-                        html.H5(f"Testset: {testset}, Class: {cls}"),
+                        html.H3(f"Testset: {testset}, Class: {cls}"),
                         html.Div(cluster, className="cluster-container"),
                     ],
                     id={"type": "cluster-container", "class": cls, "testset": testset},
@@ -519,7 +522,7 @@ def main():
                     height="512px",
                     src=f"data:image/jpeg;base64,{data}",
                 ),
-                html.H5(
+                html.H3(
                     f"Label: {label}, Predicted: {predicted}, Confidence: {confid:.4f}"
                 ),
                 html.P(f"{_imgpath}", className="file-path"),
@@ -753,7 +756,7 @@ def main():
             button,
         )
 
-    app.run(host="0.0.0.0", debug=True, dev_tools_ui=False, port="8055")
+    app.run(host="0.0.0.0", debug=True, dev_tools_ui=True, port="8055")
 
 
 if __name__ == "__main__":
