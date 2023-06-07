@@ -284,7 +284,7 @@ class Analyser:
             traces = [
                 (
                     [("correct", correct), ("class", c)],
-                    f"{'C' if correct else'Inc'}orrect, C={c}",
+                    f"Class {c}",
                     lambda data, crl=correct, cl=c: {
                         "size": 5,
                         "cmin": vmin,
@@ -292,12 +292,18 @@ class Analyser:
                         "color": data["confid"],
                         "colorscale": colorscales[0 if crl else 1],
                         "colorbar": {
-                            "title": f"{'C' if crl else'Inc'}orrect Confidence",
+                            "title": {
+                                "text": f"Confidence (classification {'success' if crl else 'failure'})",
+                                "side": "top",
+                            },
                             "orientation": "h",
                             "y": 1.02 + 0.1 * (1 if crl else 0),
-                        },
+                        }
+                        if cl == 0
+                        else None,
                         "symbol": markers[cl % len(markers)],
                     },
+                    correct,
                 )
                 for correct, c in itertools.product([True, False], classes2plot)
             ]
@@ -316,6 +322,7 @@ class Analyser:
                         ],
                         "symbol": markers[cl % len(markers)],
                     },
+                    True,
                 )
                 for t, c in itertools.product(df.testset.unique(), classes2plot)
             ]
@@ -334,6 +341,7 @@ class Analyser:
                         ],
                         "symbol": markers[cl % len(markers)],
                     },
+                    True,
                 )
                 for correct, c in itertools.product([True, False], classes2plot)
             ]
@@ -342,7 +350,7 @@ class Analyser:
 
         fig = go.Figure()
 
-        for filters, label, markers_fn in traces:
+        for filters, label, markers_fn, show_legend in traces:
             data = df
             for by, value in filters:
                 data = filter_by(data, by, value)
@@ -360,13 +368,14 @@ class Analyser:
                     text=data["filepath"],
                     hoverinfo="name",
                     marker=markers_fn(data),
+                    showlegend=show_legend,
                 )
             )
 
         fig.update_layout(
             coloraxis_colorbar=dict(yanchor="top", y=1, x=0, ticks="outside")
         )
-        fig.update_layout(width=1000, height=1000, template="simple_white")
+        fig.update_layout(legend={"itemsizing": "constant", "orientation": "h"})
         return fig
 
     @cache
