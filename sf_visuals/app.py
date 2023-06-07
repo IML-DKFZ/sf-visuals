@@ -333,7 +333,10 @@ def _failure_triplet(app_state: AppState, testset: str, stats: list[dict]):
 
 
 def main():
-    app = Dash(__name__)
+    app = Dash(
+        __name__,
+        external_stylesheets=["https://www.nerdfonts.com/assets/css/webfont.css"],
+    )
     app.config.suppress_callback_exceptions = True
 
     parser = argparse.ArgumentParser()
@@ -347,8 +350,10 @@ def main():
     )
 
     app.layout = html.Div(
+        id="app-container",
         className="app-container",
         children=[
+            html.I("", id="btn-menu", className="nf nf-fa-bars btn-menu"),
             _sidebar(app_state),
             dcc.Tabs(
                 parent_className="container",
@@ -756,7 +761,16 @@ def main():
             button,
         )
 
-    app.run(host="0.0.0.0", debug=True, dev_tools_ui=True, port="8055")
+    @app.callback(
+        Output("app-container", "className"),
+        Input("btn-menu", "n_clicks"),
+    )
+    def on_click_menu(n_clicks):
+        if n_clicks % 2 == 0:
+            return "app-container"
+        return "app-container-hide-menu"
+
+    app.run(host="0.0.0.0", debug=True, dev_tools_ui=False, port="8055")
 
 
 if __name__ == "__main__":
