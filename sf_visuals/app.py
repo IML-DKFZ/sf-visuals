@@ -225,11 +225,11 @@ def _sidebar_color_selection(_: AppState):
         ),
         dcc.RadioItems(
             [
-                {"label": "Confidence", "value": "confidence"},
                 {"label": "Source/Target", "value": "source-target"},
                 {"label": "Class Confusion", "value": "class-confusion"},
+                {"label": "Confidence", "value": "confidence"},
             ],
-            "confidence",
+            "source-target",
             id="checklist-colorby",
         ),
     ]
@@ -408,12 +408,18 @@ def main():
 
         n_traces = len(figure["data"])
         for i in range(n_traces):
+            if figure["data"][i]["name"] in ["cluster", "failure"]:
+                continue
+
             figure["data"][i]["marker"]["size"] = marker_size
             figure["data"][i]["opacity"] = marker_alpha
 
         if prev_figure is not None:
             patch = Patch()
             patch["data"] = figure["data"]
+            for i in range(len(prev_figure["data"])):
+                if prev_figure["data"][i]["name"] in ["cluster", "failure"]:
+                    patch["data"].append(prev_figure["data"][i])
             return patch
 
         return figure
@@ -424,8 +430,11 @@ def main():
         Input("checklist-classes", "value"),
         Input("selection-testset", "value"),
         Input("checklist-testsets", "value"),
+        Input("dd-confid-name", "value"),
     )
-    def update_testset_representative(base_path, classes, testset, iid_ood):
+    def update_testset_representative(
+        base_path, classes, testset, iid_ood, confid_name
+    ):
         logger.debug(f"{ctx.triggered=}")
         testsets = []
         if "iid" in iid_ood:
@@ -440,7 +449,7 @@ def main():
         imgs = []
         for testset, cls in itertools.product(testsets, classes):
             cluster = []
-            stats = app_state.analyser.representative(testset, cls)
+            stats = app_state.analyser.representative(testset, cls, csf=confid_name)
             for stat in stats:
                 with open(app_state.data_path / stat["filepath"], "rb") as img:
                     data = (
@@ -572,6 +581,8 @@ def main():
         patch = Patch()
 
         for i in range(n_traces):
+            if figure["data"][i]["name"] in ["cluster", "failure"]:
+                continue
             patch["data"][i]["marker"]["size"] = marker_size
             patch["data"][i]["opacity"] = marker_alpha
 
@@ -635,7 +646,7 @@ def main():
                 mode="markers",
                 name="failure",
                 text=[stats["filepath"]],
-                customdata=[f"{stats['label']},{stats['predicted']}"],
+                customdata=[f"{stats['label']},{stats['predicted']},{stats['confid']}"],
                 hoverinfo="name",
                 marker={"size": 10, "color": "black", "symbol": "x"},
             )
@@ -703,7 +714,10 @@ def main():
                 mode="markers",
                 name="cluster",
                 text=[stat["filepath"] for stat in stats],
-                customdata=[f"{stat['label']},{stat['predicted']}" for stat in stats],
+                customdata=[
+                    f"{stat['label']},{stat['predicted']},{stat['confid']}"
+                    for stat in stats
+                ],
                 hoverinfo="name",
                 marker={"size": 10, "color": "black", "symbol": "cross"},
             )

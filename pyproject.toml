@@ -15,7 +15,6 @@ license = { text = "MIT" }
 readme = "README.md"
 dependencies = [
     "dash>=2.7.0",
-    "dash-daq",
     "loguru",
     "matplotlib>=3.6.2",
     "numpy>=1.23.5",
@@ -25,7 +24,7 @@ dependencies = [
     "scikit-learn",
     "scipy>=1.9.3",
     "fd-shifts @ git+https://github.com/iml-dkfz/fd-shifts.git",
-    "yaml",
+    "pyyaml",
 ]
 [project.optional-dependencies]
 dev = [

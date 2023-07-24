@@ -95,7 +95,7 @@ body {
   justify-content: center;
   grid-area: hover-preview;
   max-width: 100%;
-  margin: 1vw;
+  margin: 0;
   padding: 0.5vw;
   background-color: var(--color-bg);
 }
@@ -134,7 +134,7 @@ body {
   /* width: 20%; */
   grid-area: representative-view;
   max-width: 100%;
-  margin: 1vw;
+  margin: 0;
   padding: 0.5vw;
   background-color: var(--color-bg);
   min-height: 90vh;
@@ -149,7 +149,7 @@ body {
 .failure-view-container {
   grid-area: failure-view;
   max-width: 100%;
-  margin: 1vw;
+  margin: 0;
   padding: 0.5vw;
   background-color: var(--color-bg);
   min-height: 90vh;
@@ -313,15 +313,17 @@ body {
 }
 
 #app-container {
-  transition: width 0.3s, left 0.3s;
+  transition: left 0.3s, width 0.3s, max-width 0.3s;
 }
 .app-container {
-  width: calc(100vw-1vh);
+  width: 100vw;
   left: 0;
+  max-width: 100%;
 }
 .app-container-hide-menu {
-  width: calc(125vw-1vh);
-  left: -25vw;
+  max-width: 125%;
+  width: 125%;
+  left: -25%;
 }
 
 .app-container-hide-menu .tab-container {

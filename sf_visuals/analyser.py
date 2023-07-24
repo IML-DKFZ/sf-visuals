@@ -297,7 +297,9 @@ class Analyser:
                                 "side": "top",
                             },
                             "orientation": "h",
-                            "y": 1.02 + 0.1 * (1 if crl else 0),
+                            "y": 0.99 - 0.10 * (1 if crl else 0),
+                            "thickness": 0.02,
+                            "thicknessmode": "fraction",
                         }
                         if cl == 0
                         else None,
@@ -379,15 +381,15 @@ class Analyser:
         return fig
 
     @cache
-    def representative(self, testset: str, cls: int):
-        df = self.embedding(testset)
+    def representative(self, testset: str, cls: int, csf: str = "det_mcp"):
+        df = self.with_confid(testset, csf)
         data = kmeans_cluster_representative_without_failurelabel(
             dataframe=df,
             cla=cls,
         )
-        return data[["filepath", "predicted", "label", "0", "1", "2"]].to_dict(
-            "records"
-        )
+        return data[
+            ["filepath", "predicted", "label", "confid", "0", "1", "2"]
+        ].to_dict("records")
 
     @cache
     def with_confid(self, testset, csf):
